@@ -146,13 +146,29 @@ int check_player(char **map_arr, t_player *player)
     return (0);
 }
 
-// int flood_fill(char **map_arr, int x, int y)
-// {
-//     if (!(map_arr[x][y] == '0' && map_arr[x][y] == '2' && map_arr[x][y] == '2' && map_arr[x][y] == 'N' && map_arr[x][y] == 'E' && map_arr[x][y] == 'W' && map_arr[x][y] == 'S'))
-//         return (-1);
-//     map_arr[x][y] == '1';
-//     flood_fill(map_arr, )
-// }
+int flood_fill(char ***map_arr, int x, int y)
+{
+    // if (!(map_arr[y][x] == 'N' || map_arr[y][x] == 'W' || map_arr[y][x] == 'E' || map_arr[y][x] == 'S' || map_arr[y][x] == '0' || map_arr[y][x] == '2'))
+    //     return (-1);
+    if ((*map_arr)[y][x] == ' ' || (*map_arr)[y][x] == '\0')
+        return (-1);
+    if ((*map_arr)[y][x] == 'c' || (*map_arr)[y][x] == '1')
+        return(1);
+    // printf("x= %d, y= %d\n, %c", x, y, (*map_arr)[y][x]);
+
+    if ((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2')
+        (*map_arr)[y][x] = 'c';
+    if (flood_fill(map_arr, x, y + 1) < 0)
+        return (-1);
+    if (flood_fill(map_arr, x + 1, y) < 0)
+        return (-1);
+    if (flood_fill(map_arr, x - 1, y) < 0)
+        return (-1);
+    if (flood_fill(map_arr, x, y - 1) < 0)
+        return (-1);
+    // return (flood_fill(map_arr, x - 1, y) || flood_fill(map_arr, x + 1, y) || flood_fill(map_arr, x, y - 1) || flood_fill(map_arr, x, y + 1));
+    return (0);
+}
 
 int longest_str(char **map)
 {
@@ -190,7 +206,7 @@ int main()
     map_info.ea = NULL;
     map_info.s = NULL;
 
-    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n 1111111111111111111111\n 1000000000110000000001\n 1011000001110000002000001\n 100100000000000N000000001\n 1111111111111111111111111";
+    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n 1111111111111111111111\n 100000000011000000000111\n 1011000001110000002000001\n 100100000000000N000000001\n 1111111111111111111111111";
     map = ft_split(map_str, '\n');
     if (check_info(map, &map_info) < 0)
     {
@@ -230,18 +246,17 @@ int main()
         printf("%s\n", map_arr[k]);
         k++;
     }
-    //
-    // if (check_player(map_arr, &player) < 0)
-    // {
-    //     printf("%s", "Invalid .cub file");
-    //     return (-1);
-    // }
-    // printf("%d", map_str_len);
-    // if (flood_fill(map_arr, player.x_player, player.y_player) < 0)
-    // {
-    //     printf("%s", "Invalid .cub file");
-    //     return (-1);
-    // }
+    
+    if (check_player(map_arr, &player) < 0)
+    {
+        printf("%s", "Invalid .cub file");
+        return (-1);
+    }
+    if (flood_fill(&map_arr, player.x_player, player.y_player) < 0)
+    {
+        printf("%s", "Invalid .cub file");
+        return (-1);
+    }
     // printf("%d\n", player.x_player);
     // printf("%d\n", player.y_player);
 
@@ -252,7 +267,7 @@ int main()
     // printf("%s\n", map_info.we);
     // printf("%s\n", map_info.ea);
     // printf("%s\n", map_info.s);
-    // printf("%c", map[0][50]);
+
     
     return 0;
 }
