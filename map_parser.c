@@ -104,15 +104,15 @@ int check_info(char **map, t_map *map_info)
     return (0);
 }
 
-int count_map_len(char **map)
+int count_map_len(char **map, int i)
 {
     int map_len;
 
     map_len = 0;
-    while (*map)
+    while (map[i])
     {
         map_len++;
-        map++;
+        i++;
     }
     return (map_len);
 }
@@ -154,15 +154,33 @@ int check_player(char **map_arr, t_player *player)
 //     flood_fill(map_arr, )
 // }
 
+int longest_str(char **map)
+{
+    int i;
+    int max_len;
+
+    i = 6;
+    max_len = 0;
+    while (map[i])
+    {
+        if (ft_strlen(map[i]) > max_len)
+            max_len = ft_strlen(map[i]);
+        i++;
+    }
+    return (max_len);
+}
+
 int main()
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
     int i = 0;
+    int j = 0;
     char **map;
     char **map_arr;
     int map_len;
     t_map map_info;
     t_player player;
+    int map_str_len;
 
     map_info.win_h = 0;
     map_info.win_w = 0;
@@ -172,27 +190,53 @@ int main()
     map_info.ea = NULL;
     map_info.s = NULL;
 
-    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n 1111111111111111111111111\n 1000000000110000000000001\n 1011000001110000002000001\n 100100000000000N000000001\n 1111111111111111111111111";
+    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n 1111111111111111111111\n 1000000000110000000001\n 1011000001110000002000001\n 100100000000000N000000001\n 1111111111111111111111111";
     map = ft_split(map_str, '\n');
     if (check_info(map, &map_info) < 0)
     {
         printf("%s", "Invalid .cub file");
         return (-1);
     }
-    map_len = count_map_len(map);
-    map_arr = (char**)malloc((map_len + 1) * sizeof(char*));
-    while (map_len--)
+    //Выделяем новый массив под карту онли
+    map_str_len = longest_str(map);
+    map_len = count_map_len(map, 6) + 3;
+
+    map_arr = (char**)malloc((map_len) * sizeof(char*));
+    while (i < map_len)
     {
-        map_arr[i] = map[i + 6];
+        map_arr[i] = ft_calloc(map_str_len + 2, 1);
+        map_arr[i][0] = ' ';
         i++;
     }
+    free(map_arr[--i]);
     map_arr[i] = NULL;
-    free(map);
-    if (check_player(map_arr, &player) < 0)
+    i = 1;
+    map_len -= 3;
+
+    while (map_len--)
     {
-        printf("%s", "Invalid .cub file");
-        return (-1);
+        j = 0;
+        while (map[i + 5][j])
+        {
+            map_arr[i][j + 1] = map[i + 5][j];
+            j++;
+        }
+        i++;
     }
+    free(map);
+    int k = 0;
+    while(map_arr[k])
+    {
+        printf("%s\n", map_arr[k]);
+        k++;
+    }
+    //
+    // if (check_player(map_arr, &player) < 0)
+    // {
+    //     printf("%s", "Invalid .cub file");
+    //     return (-1);
+    // }
+    // printf("%d", map_str_len);
     // if (flood_fill(map_arr, player.x_player, player.y_player) < 0)
     // {
     //     printf("%s", "Invalid .cub file");
@@ -209,7 +253,6 @@ int main()
     // printf("%s\n", map_info.ea);
     // printf("%s\n", map_info.s);
     // printf("%c", map[0][50]);
-    if (map[0][50])
-        printf("y");
+    
     return 0;
 }
