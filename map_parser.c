@@ -1,5 +1,15 @@
 #include <stdio.h>
-#include "libft.h"
+#include "libft/libft.h"
+
+void ft_strcpy(char *dst, const char *src)
+{
+    while (*src)
+    {
+        *dst = *src;
+        dst++;
+        src++;
+    }
+}
 
 int check_r(char *map_line, t_map *map_info)
 {
@@ -142,31 +152,27 @@ int check_player(char **map_arr, t_player *player)
     }
     if (count != 1)
         return (-1);
-    
+
     return (0);
 }
 
-int flood_fill(char ***map_arr, int x, int y)
+int flood_fill(char ***map_arr, int x, int y, t_map map_info)
 {
-    // if (!(map_arr[y][x] == 'N' || map_arr[y][x] == 'W' || map_arr[y][x] == 'E' || map_arr[y][x] == 'S' || map_arr[y][x] == '0' || map_arr[y][x] == '2'))
-    //     return (-1);
-    if ((*map_arr)[y][x] == ' ' || (*map_arr)[y][x] == '\0')
+    if (x < 0 || x > map_info.str_len|| y < 0 || y >= map_info.map_len || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
         return (-1);
-    if ((*map_arr)[y][x] == 'c' || (*map_arr)[y][x] == '1')
-        return(1);
-    // printf("x= %d, y= %d\n, %c", x, y, (*map_arr)[y][x]);
+    if ((*map_arr)[y][x] == '1')
+        return (1);
 
     if ((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2')
-        (*map_arr)[y][x] = 'c';
-    if (flood_fill(map_arr, x, y + 1) < 0)
+        (*map_arr)[y][x] = '1';
+    if (flood_fill(map_arr, x, y + 1, map_info) < 0)
         return (-1);
-    if (flood_fill(map_arr, x + 1, y) < 0)
+    if (flood_fill(map_arr, x + 1, y, map_info) < 0)
         return (-1);
-    if (flood_fill(map_arr, x - 1, y) < 0)
+    if (flood_fill(map_arr, x - 1, y, map_info) < 0)
         return (-1);
-    if (flood_fill(map_arr, x, y - 1) < 0)
+    if (flood_fill(map_arr, x, y - 1, map_info) < 0)
         return (-1);
-    // return (flood_fill(map_arr, x - 1, y) || flood_fill(map_arr, x + 1, y) || flood_fill(map_arr, x, y - 1) || flood_fill(map_arr, x, y + 1));
     return (0);
 }
 
@@ -206,7 +212,8 @@ int main()
     map_info.ea = NULL;
     map_info.s = NULL;
 
-    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n 1111111111111111111111\n 100000000011000000000111\n 1011000001110000002000001\n 100100000000000N000000001\n 1111111111111111111111111";
+    // char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n1111\n1111\n11W0\n1111";
+    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n1111111111111111111111\n1000000000011000000000111\n1011000001110000002000001\n100100000000000N000000001\n1111111111111111111111111";
     map = ft_split(map_str, '\n');
     if (check_info(map, &map_info) < 0)
     {
@@ -214,49 +221,44 @@ int main()
         return (-1);
     }
     //Выделяем новый массив под карту онли
-    map_str_len = longest_str(map);
-    map_len = count_map_len(map, 6) + 3;
+    map_info.str_len = longest_str(map);
+    map_info.map_len = count_map_len(map, 6);
 
-    map_arr = (char**)malloc((map_len) * sizeof(char*));
-    while (i < map_len)
+    map_arr = (char **)malloc((map_info.map_len + 1) * sizeof(char *));
+    while (i < map_info.map_len)
     {
-        map_arr[i] = ft_calloc(map_str_len + 2, 1);
-        map_arr[i][0] = ' ';
+        map_arr[i] = ft_calloc(map_info.str_len + 1, 1);
         i++;
     }
-    free(map_arr[--i]);
     map_arr[i] = NULL;
-    i = 1;
-    map_len -= 3;
-
-    while (map_len--)
+    i = 0;
+    while (i < map_info.map_len)
     {
-        j = 0;
-        while (map[i + 5][j])
-        {
-            map_arr[i][j + 1] = map[i + 5][j];
-            j++;
-        }
+        ft_strcpy(map_arr[i], map[i + 6]);
         i++;
     }
     free(map);
+
+
     int k = 0;
-    while(map_arr[k])
+    while (map_arr[k])
     {
         printf("%s\n", map_arr[k]);
         k++;
     }
-    
+
     if (check_player(map_arr, &player) < 0)
     {
         printf("%s", "Invalid .cub file");
         return (-1);
     }
-    if (flood_fill(&map_arr, player.x_player, player.y_player) < 0)
+    if (flood_fill(&map_arr, player.x_player, player.y_player, map_info) < 0)
     {
-        printf("%s", "Invalid .cub file");
+        printf("%s\n", "Invalid .cub file");
         return (-1);
     }
+
+    // printf("%d\n", map_info.map_len);
     // printf("%d\n", player.x_player);
     // printf("%d\n", player.y_player);
 
@@ -268,6 +270,5 @@ int main()
     // printf("%s\n", map_info.ea);
     // printf("%s\n", map_info.s);
 
-    
     return 0;
 }
