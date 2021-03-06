@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "libft/libft.h"
+#include <mlx.h>
 
 void ft_strcpy(char *dst, const char *src)
 {
@@ -152,13 +153,12 @@ int check_player(char **map_arr, t_player *player)
     }
     if (count != 1)
         return (-1);
-
     return (0);
 }
 
 int flood_fill(char ***map_arr, int x, int y, t_map map_info)
 {
-    if (x < 0 || x > map_info.str_len|| y < 0 || y >= map_info.map_len || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
+    if (x < 0 || x > map_info.str_len || y < 6 || y >= map_info.map_len + 6 || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
         return (-1);
     if ((*map_arr)[y][x] == '1')
         return (1);
@@ -192,17 +192,39 @@ int longest_str(char **map)
     return (max_len);
 }
 
+void draw_square(t_win *window, int x, int y)
+{
+    int width;
+    int height;
+
+    width = 20;
+    height = 20;
+    while (height)
+    {
+        width = 20;
+        x = 0;
+        while (width)
+        {
+            mlx_pixel_put(window->mlx, window->win, x, y, 0xFFFFFF);
+            x++;
+            width--;
+        }
+        y++;
+        height--;
+    }
+}
+
 int main()
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
+    int fd;
+    int ret;
+    char map_str[BUF_SIZE + 1];
     int i = 0;
-    int j = 0;
     char **map;
-    char **map_arr;
-    int map_len;
     t_map map_info;
     t_player player;
-    int map_str_len;
+    t_win window;
 
     map_info.win_h = 0;
     map_info.win_w = 0;
@@ -212,63 +234,80 @@ int main()
     map_info.ea = NULL;
     map_info.s = NULL;
 
-    // char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n1111\n1111\n11W0\n1111";
-    char *map_str = "R    1600     800\nNO     cub3d_tester/textures/wall_1.xpm\n\n\nWE cub3d_tester/textures/wall_3.xpm\nEA cub3d_tester/textures/wall_4.xpm\nS cub3d_tester/textures/sprite_1.xpm\nSO cub3d_tester/textures/sprite_1.xpm\n1111111111111111111111\n1000000000011000000000111\n1011000001110000002000001\n100100000000000N000000001\n1111111111111111111111111";
+    fd = open("map.cub", O_RDWR);
+    if (fd == -1)
+    {
+        printf("%s\n", "Error");
+        return (-1);
+    }
+    while ((ret = read(fd, map_str, BUF_SIZE)))
+        map_str[ret] = '\0';
+    close(fd);
     map = ft_split(map_str, '\n');
     if (check_info(map, &map_info) < 0)
     {
-        printf("%s", "Invalid .cub file");
+        printf("%s\n", "Error");
         return (-1);
     }
     //Выделяем новый массив под карту онли
     map_info.str_len = longest_str(map);
     map_info.map_len = count_map_len(map, 6);
 
-    map_arr = (char **)malloc((map_info.map_len + 1) * sizeof(char *));
+    map_info.map = (char **)malloc((map_info.map_len + 1) * sizeof(char *));
     while (i < map_info.map_len)
     {
-        map_arr[i] = ft_calloc(map_info.str_len + 1, 1);
+        map_info.map[i] = ft_calloc(map_info.str_len + 1, 1);
         i++;
     }
-    map_arr[i] = NULL;
+    map_info.map[i] = NULL;
     i = 0;
     while (i < map_info.map_len)
     {
-        ft_strcpy(map_arr[i], map[i + 6]);
+        ft_strcpy(map_info.map[i], map[i + 6]);
         i++;
     }
+
+    if (check_player(map_info.map, &player) < 0)
+    {
+        printf("%s\n", "Error");
+        return (-1);
+    }
+
+    if (flood_fill(&map, player.x_player, player.y_player + 6, map_info) < 0)
+    {
+        printf("%s\n", "Error");
+        return (-1);
+    }
     free(map);
+    //Рисуем карту
+                window.mlx = mlx_init();
+                window.win = mlx_new_window(window.mlx, map_info.win_w, map_info.win_h, "Test");
 
+                int k = 0;
+                int l = 0;
+                int x = 0;
+                int y = 0;
+                // int len = 0;
 
-    int k = 0;
-    while (map_arr[k])
-    {
-        printf("%s\n", map_arr[k]);
-        k++;
-    }
-
-    if (check_player(map_arr, &player) < 0)
-    {
-        printf("%s", "Invalid .cub file");
-        return (-1);
-    }
-    if (flood_fill(&map_arr, player.x_player, player.y_player, map_info) < 0)
-    {
-        printf("%s\n", "Invalid .cub file");
-        return (-1);
-    }
-
-    // printf("%d\n", map_info.map_len);
-    // printf("%d\n", player.x_player);
-    // printf("%d\n", player.y_player);
-
-    // printf("%d\n", map_info.win_w);
-    // printf("%d\n", map_info.win_h);
-    // printf("%s\n", map_info.no);
-    // printf("%s\n", map_info.so);
-    // printf("%s\n", map_info.we);
-    // printf("%s\n", map_info.ea);
-    // printf("%s\n", map_info.s);
-
+                while (map_info.map[k])
+                {
+                    l = 0;
+                    while (map_info.map[k][l])
+                    {
+                        if (map_info.map[k][l] == '1')
+                            // mlx_pixel_put(window.mlx, window.win, l, k, 0xFFFFFF);
+                        {
+                            draw_square(&window, x, y);
+                            // len++;
+                        }
+                        x += 20;
+                        l++;
+                    }
+                    y += 20;
+                    k++;
+                }
+                // printf("%d", len);
+                mlx_loop(window.mlx);
     return 0;
 }
+
