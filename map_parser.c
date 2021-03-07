@@ -192,26 +192,52 @@ int longest_str(char **map)
     return (max_len);
 }
 
-void draw_square(t_win *window, int x, int y)
+void draw_square(t_win window, int x, int y, int color)
 {
     int width;
     int height;
+    int x_start;
 
     width = 20;
     height = 20;
+    x_start = x;
     while (height)
     {
         width = 20;
-        x = 0;
+        x = x_start;
         while (width)
         {
-            mlx_pixel_put(window->mlx, window->win, x, y, 0xFFFFFF);
+            mlx_pixel_put(window.mlx, window.win, x, y, color);
             x++;
             width--;
         }
         y++;
         height--;
     }
+}
+
+int check_map(char ***map, t_map map_info)
+{
+    int i;
+    int j;
+
+    i = 6;
+    j = 0;
+    while ((*map)[i])
+    {
+        j = 0;
+        while ((*map)[i][j])
+        {
+            if ((*map)[i][j] == '0' || (*map)[i][j] == '2' || (*map)[i][j] == 'N' || (*map)[i][j] == 'E' || (*map)[i][j] == 'S' || (*map)[i][j] == 'W')
+            {
+                if (flood_fill(map, j, i, map_info) < 0)
+                    return (-1);
+            }
+            j++;
+        }
+        i++;
+    }
+    return (0);
 }
 
 int main()
@@ -273,41 +299,41 @@ int main()
         return (-1);
     }
 
-    if (flood_fill(&map, player.x_player, player.y_player + 6, map_info) < 0)
+    if (check_map(&map, map_info) < 0)
     {
         printf("%s\n", "Error");
         return (-1);
     }
+
     free(map);
     //Рисуем карту
-                window.mlx = mlx_init();
-                window.win = mlx_new_window(window.mlx, map_info.win_w, map_info.win_h, "Test");
+    window.mlx = mlx_init();
+    window.win = mlx_new_window(window.mlx, map_info.win_w, map_info.win_h, "Test");
 
-                int k = 0;
-                int l = 0;
-                int x = 0;
-                int y = 0;
-                // int len = 0;
+    int k = 0;
+    int l = 0;
+    int x = 0;
+    int y = 0;
+    // int len = 0;
 
-                while (map_info.map[k])
-                {
-                    l = 0;
-                    while (map_info.map[k][l])
-                    {
-                        if (map_info.map[k][l] == '1')
-                            // mlx_pixel_put(window.mlx, window.win, l, k, 0xFFFFFF);
-                        {
-                            draw_square(&window, x, y);
-                            // len++;
-                        }
-                        x += 20;
-                        l++;
-                    }
-                    y += 20;
-                    k++;
-                }
-                // printf("%d", len);
-                mlx_loop(window.mlx);
+    while (map_info.map[k])
+    {
+        l = 0;
+        x = 0;
+        while (map_info.map[k][l])
+        {
+            if (map_info.map[k][l] == '1')
+                draw_square(window, x, y, 0xFFFFFF);
+            if (map_info.map[k][l] == '2')
+                draw_square(window, x, y, 0xFF0000);
+            else if (map_info.map[k][l] == 'N' || map_info.map[k][l] == 'W' || map_info.map[k][l] == 'E' || map_info.map[k][l] == 'S')
+                draw_square(window, x, y, 0x00FF00);
+            x += 20;
+            l++;
+        }
+        y += 20;
+        k++;
+    }
+    mlx_loop(window.mlx);
     return 0;
 }
-
