@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "libft/libft.h"
 #include <mlx.h>
-
+#define SCALE 30
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -185,7 +185,7 @@ int longest_str(char **map)
     max_len = 0;
     while (map[i])
     {
-        if (ft_strlen(map[i]) > max_len)
+        if ((int)ft_strlen(map[i]) > max_len)
             max_len = ft_strlen(map[i]);
         i++;
     }
@@ -198,12 +198,12 @@ void draw_square(t_win window, int x, int y, int color)
     int height;
     int x_start;
 
-    width = 20;
-    height = 20;
+    width = SCALE;
+    height = SCALE;
     x_start = x;
     while (height)
     {
-        width = 20;
+        width = SCALE;
         x = x_start;
         while (width)
         {
@@ -239,6 +239,18 @@ int check_map(char ***map, t_map map_info)
     }
     return (0);
 }
+
+// void	ft_cast_ray(t_win *all)
+// {
+// 	t_plr	ray = *all->plr; // задаем координаты луча равные координатам игрока
+
+// 	while (all->map[(int)(ray.y / SCALE)][(int)(ray.x / SCALE)] != '1')
+// 	{
+// 		ray.x += cos(ray.dir);
+// 		ray.y += sin(ray.dir);
+// 		mlx_pixel_put(all->mlx, all->win, ray.x, ray.y, 0x990099);
+// 	}
+// }
 
 int main()
 {
@@ -314,8 +326,6 @@ int main()
     int l = 0;
     int x = 0;
     int y = 0;
-    // int len = 0;
-
     while (map_info.map[k])
     {
         l = 0;
@@ -324,16 +334,39 @@ int main()
         {
             if (map_info.map[k][l] == '1')
                 draw_square(window, x, y, 0xFFFFFF);
-            if (map_info.map[k][l] == '2')
+            else if (map_info.map[k][l] == '2')
                 draw_square(window, x, y, 0xFF0000);
-            else if (map_info.map[k][l] == 'N' || map_info.map[k][l] == 'W' || map_info.map[k][l] == 'E' || map_info.map[k][l] == 'S')
-                draw_square(window, x, y, 0x00FF00);
-            x += 20;
+            // else if (map_info.map[k][l] == 'N' || map_info.map[k][l] == 'W' || map_info.map[k][l] == 'E' || map_info.map[k][l] == 'S')
+            //     draw_square(window, x, y, 0x00FF00);
+            x += SCALE;
             l++;
         }
-        y += 20;
+        y += SCALE;
         k++;
     }
+
+    mlx_pixel_put(window.mlx, window.win, player.x_player * SCALE + (SCALE/2), player.y_player * SCALE + (SCALE/2), 0x00FF00);
     mlx_loop(window.mlx);
+
+            // t_plr   ray = *all->plr; // задаем координаты луча равные координатам игрока
+
+            // while (all->map[(int)(ray.y / SCALE)][(int)(ray.x / SCALE)] != '1')
+            // {
+            //     ray.x += cos(ray.dir);
+            //     ray.y += sin(ray.dir);
+            //     mlx_pixel_put(all->mlx, all->win, ray.x, ray.y, 0x990099);
+            // }
+
+    // //Потуги с лучами
+    // double posX = player.x_player; //координата игрока по x
+    // double poxY = player.y_player; //координата игрока по y
+    // double dirX = -1;
+    // double dirY = 0;
+    // double planeX = 0;
+    // double planeY = 0.66;
+    // double time = 0;
+    // double oldTime = 0;
+
+    // double angle = 0; //угол взгляда игрока
     return 0;
 }

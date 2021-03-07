@@ -15,6 +15,15 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
+# define BUF_SIZE 1024
+
+typedef struct  s_win {
+        void    *mlx;
+        void    *win;
+}               t_win;
 
 typedef struct	s_list
 {
@@ -33,12 +42,16 @@ typedef struct	s_map
 	char *s;
 	int map_len;
 	int str_len;
+	char **map;
 }				t_map;
 
 typedef struct s_player
 {
-	int x_player;
-	int y_player;
+	float x_player;
+	float y_player;
+	float		dir;
+	float		start;
+	float		end;
 }				t_player;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
