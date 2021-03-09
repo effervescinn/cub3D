@@ -128,6 +128,18 @@ int count_map_len(char **map, int i)
     return (map_len);
 }
 
+void set_dir(char sym, t_player *player)
+{
+    if (sym == 'N')
+        player->dir = 3 * M_PI_2;
+    else if (sym == 'S')
+        player->dir = M_PI_2;
+    else if (sym == 'W')
+        player->dir = M_PI;
+    else if (sym == 'E')
+        player->dir = 0;
+}
+
 int check_player(char **map_arr, t_player *player)
 {
     int i;
@@ -145,6 +157,7 @@ int check_player(char **map_arr, t_player *player)
             {
                 player->x_player = j;
                 player->y_player = i;
+                set_dir(map_arr[i][j], player);
                 count++;
             }
             j++;
@@ -240,18 +253,6 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-// void	ft_cast_ray(t_win *all)
-// {
-// 	t_plr	ray = *all->plr; // задаем координаты луча равные координатам игрока
-
-// 	while (all->map[(int)(ray.y / SCALE)][(int)(ray.x / SCALE)] != '1')
-// 	{
-// 		ray.x += cos(ray.dir);
-// 		ray.y += sin(ray.dir);
-// 		mlx_pixel_put(all->mlx, all->win, ray.x, ray.y, 0x990099);
-// 	}
-// }
-
 int main()
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
@@ -344,29 +345,64 @@ int main()
         y += SCALE;
         k++;
     }
+    player.x_player = player.x_player * SCALE;
+    player.y_player = player.y_player * SCALE;
 
-    mlx_pixel_put(window.mlx, window.win, player.x_player * SCALE + (SCALE/2), player.y_player * SCALE + (SCALE/2), 0x00FF00);
+    mlx_pixel_put(window.mlx, window.win, player.x_player, player.y_player, 0x00FF00); // Игрок
+
+    t_player ray;
+    ray = player;
+    // Луч
+    // while (map_info.map[(int)(ray.y_player / SCALE)][(int)(ray.x_player / SCALE)] != '1')
+    // {
+    //     ray.x_player += cos(ray.dir);
+    //     ray.y_player += sin(ray.dir);
+    //     mlx_pixel_put(window.mlx, window.win, ray.x_player, ray.y_player, 0x990099);
+    // }
+
+    // Много лучей
+    // ray.start = ray.dir - M_PI_4;
+    // ray.end = ray.dir + M_PI_4;
+    // while (ray.start <= ray.end)
+    // {
+    //     ray.x_player = player.x_player; // каждый раз возвращаемся в точку начала
+    //     ray.y_player = player.y_player;
+    //     while (map_info.map[(int)(ray.y_player / SCALE)][(int)(ray.x_player / SCALE)] != '1')
+    //     {
+    //         ray.x_player += cos(ray.start);
+    //         ray.y_player += sin(ray.end);
+    //         mlx_pixel_put(window.mlx, window.win, ray.x_player, ray.y_player, 0x990099);
+    //     }
+    //     ray.start += M_PI_2 / 1000;
+    // }
+
+    
+
+    // Потуги с лучами
+    double posX = player.x_player; //координата игрока по x
+    double poxY = player.y_player; //координата игрока по y
+    double dirX = -1; //initial diection vector
+    double dirY = 0;
+    double planeX = 0; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
+    double planeY = 0.66;
+    double time = 0;
+    double oldTime = 0;
+    double cameraX;
+    double rayDirX;
+    double rayDirY;
+
+    int p = 0;
+    double w = 12; //предположительно количество лучей
+    while (p < w)
+    {
+      //calculate ray position and direction
+      cameraX = 2 * p / w - 1; //x-coordinate in camera space
+      rayDirX = dirX + planeX * cameraX;
+      rayDirY = dirY + planeY * cameraX;
+      printf("%f and %f and %f\n", cameraX, rayDirX, rayDirY);
+      p++;
+    }
     mlx_loop(window.mlx);
-
-            // t_plr   ray = *all->plr; // задаем координаты луча равные координатам игрока
-
-            // while (all->map[(int)(ray.y / SCALE)][(int)(ray.x / SCALE)] != '1')
-            // {
-            //     ray.x += cos(ray.dir);
-            //     ray.y += sin(ray.dir);
-            //     mlx_pixel_put(all->mlx, all->win, ray.x, ray.y, 0x990099);
-            // }
-
-    // //Потуги с лучами
-    // double posX = player.x_player; //координата игрока по x
-    // double poxY = player.y_player; //координата игрока по y
-    // double dirX = -1;
-    // double dirY = 0;
-    // double planeX = 0;
-    // double planeY = 0.66;
-    // double time = 0;
-    // double oldTime = 0;
-
     // double angle = 0; //угол взгляда игрока
     return 0;
 }

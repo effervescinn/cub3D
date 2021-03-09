@@ -18,6 +18,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
+# include <math.h>
 # define BUF_SIZE 1024
 
 typedef struct  s_win {
@@ -47,11 +48,11 @@ typedef struct	s_map
 
 typedef struct s_player
 {
-	float x_player;
-	float y_player;
-	float		dir;
-	float		start;
-	float		end;
+	float	x_player;
+	float	y_player;
+	float	dir;
+	float	start;
+	float	end;
 }				t_player;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
