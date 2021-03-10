@@ -253,6 +253,16 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
+// verLine(p, drawStart, drawEnd, color);
+void drawline(t_win *window, int p, int drawStart, int drawEnd, int color)
+{
+    while (drawStart <= drawEnd)
+    {
+        mlx_pixel_put(window->mlx, window->win, p, drawStart, color);
+        drawStart++;
+    }
+}
+
 int main()
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
@@ -319,36 +329,36 @@ int main()
     }
 
     free(map);
-    //Рисуем карту
+    // Рисуем карту
     window.mlx = mlx_init();
     window.win = mlx_new_window(window.mlx, map_info.win_w, map_info.win_h, "Test");
 
-    int k = 0;
-    int l = 0;
-    int x = 0;
-    int y = 0;
-    while (map_info.map[k])
-    {
-        l = 0;
-        x = 0;
-        while (map_info.map[k][l])
-        {
-            if (map_info.map[k][l] == '1')
-                draw_square(window, x, y, 0xFFFFFF);
-            else if (map_info.map[k][l] == '2')
-                draw_square(window, x, y, 0xFF0000);
-            // else if (map_info.map[k][l] == 'N' || map_info.map[k][l] == 'W' || map_info.map[k][l] == 'E' || map_info.map[k][l] == 'S')
-            //     draw_square(window, x, y, 0x00FF00);
-            x += SCALE;
-            l++;
-        }
-        y += SCALE;
-        k++;
-    }
-    player.x_player = player.x_player * SCALE;
-    player.y_player = player.y_player * SCALE;
+    // int k = 0;
+    // int l = 0;
+    // int x = 0;
+    // int y = 0;
+    // while (map_info.map[k])
+    // {
+    //     l = 0;
+    //     x = 0;
+    //     while (map_info.map[k][l])
+    //     {
+    //         if (map_info.map[k][l] == '1')
+    //             draw_square(window, x, y, 0xFFFFFF);
+    //         else if (map_info.map[k][l] == '2')
+    //             draw_square(window, x, y, 0xFF0000);
+    //         // else if (map_info.map[k][l] == 'N' || map_info.map[k][l] == 'W' || map_info.map[k][l] == 'E' || map_info.map[k][l] == 'S')
+    //         //     draw_square(window, x, y, 0x00FF00);
+    //         x += SCALE;
+    //         l++;
+    //     }
+    //     y += SCALE;
+    //     k++;
+    // }
+    // player.x_player = player.x_player * SCALE;
+    // player.y_player = player.y_player * SCALE;
 
-    mlx_pixel_put(window.mlx, window.win, player.x_player, player.y_player, 0x00FF00); // Игрок
+    // mlx_pixel_put(window.mlx, window.win, player.x_player, player.y_player, 0x00FF00); // Игрок
 
     t_player ray;
     ray = player;
@@ -376,33 +386,126 @@ int main()
     //     ray.start += M_PI_2 / 1000;
     // }
 
-    
-
     // Потуги с лучами
-    double posX = player.x_player; //координата игрока по x
-    double poxY = player.y_player; //координата игрока по y
-    double dirX = -1; //initial diection vector
+    double posX = (double)player.x_player; //координата игрока по x //26
+    double posY = (double)player.y_player; //координата игрока по y //9
+    double dirX = -1;              //initial diection vector
     double dirY = 0;
     double planeX = 0; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
     double planeY = 0.66;
+
     double time = 0;
     double oldTime = 0;
-    double cameraX;
-    double rayDirX;
-    double rayDirY;
+
+    // double cameraX;
+    // double rayDirX;
+    // double rayDirY;
+
+    // int mapX;
+    // int mapY;
+    // double sideDistX;
+    // double sideDistY;
+    // double deltaDistX;
+    // double deltaDistY;
+    // double perpWallDist;
+    // int stepX;
+    // int stepY;
+
+    // int hit; //was there a wall hit?
+    // int side;
+    // int lineHeight;
+    // int drawStart;
+    // int drawEnd;
+    int h = 800;
+    int w = 1600;
 
     int p = 0;
-    double w = 12; //предположительно количество лучей
     while (p < w)
     {
-      //calculate ray position and direction
-      cameraX = 2 * p / w - 1; //x-coordinate in camera space
-      rayDirX = dirX + planeX * cameraX;
-      rayDirY = dirY + planeY * cameraX;
-      printf("%f and %f and %f\n", cameraX, rayDirX, rayDirY);
-      p++;
+//calculate ray position and direction
+      double cameraX = 2 * p / (double)w - 1; //x-coordinate in camera space
+      double rayDirX = dirX + planeX * cameraX;
+      double rayDirY = dirY + planeY * cameraX;
+      //which box of the map we're in
+      int mapX = (int)posX;
+      int mapY = (int)posY;
+
+      //length of ray from current position to next x or y-side
+      double sideDistX;
+      double sideDistY;
+
+       //length of ray from one x or y-side to next x or y-side
+      double deltaDistX = fabs(1 / rayDirX);
+      double deltaDistY = fabs(1 / rayDirY);
+      double perpWallDist;
+
+      //what direction to step in x or y-direction (either +1 or -1)
+      int stepX;
+      int stepY;
+
+      int hit = 0; //was there a wall hit?
+      int side; //was a NS or a EW wall hit?
+      //calculate step and initial sideDist
+      if(rayDirX < 0)
+      {
+        stepX = -1;
+        sideDistX = (posX - mapX) * deltaDistX;
+      }
+      else
+      {
+        stepX = 1;
+        sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+      }
+      if(rayDirY < 0)
+      {
+        stepY = -1;
+        sideDistY = (posY - mapY) * deltaDistY;
+      }
+      else
+      {
+        stepY = 1;
+        sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+      }
+      //perform DDA
+      while (hit == 0)
+      {
+        //jump to next map square, OR in x-direction, OR in y-direction
+        if(sideDistX < sideDistY)
+        {
+          sideDistX += deltaDistX;
+          mapX += stepX;
+          side = 0;
+        }
+        else
+        {
+          sideDistY += deltaDistY;
+          mapY += stepY;
+          side = 1;
+        }
+        //Check if ray has hit a wall
+        if(map_info.map[mapY][mapX] != '0') hit = 1;
+      }
+      //Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
+      if(side == 0) perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
+      else          perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+
+      //Calculate height of line to draw on screen
+      int lineHeight = (int)(h / perpWallDist);
+
+      //calculate lowest and highest pixel to fill in current stripe
+      int drawStart = -lineHeight / 2 + h / 2;
+      if(drawStart < 0)
+        drawStart = 0;
+      int drawEnd = lineHeight / 2 + h / 2;
+      if(drawEnd >= h)
+        drawEnd = h - 1;
+        //   printf("%f and %f and %f\n", cameraX, rayDirX, rayDirY);
+    drawline(&window, p, drawStart, drawEnd, 0x9999FF);
+        // printf("%f\n", deltaDistY);
+        p++;
     }
+    // printf("%d-%d", player.x_player, player.y_player);
     mlx_loop(window.mlx);
     // double angle = 0; //угол взгляда игрока
-    return 0;
+    return (0);
 }
