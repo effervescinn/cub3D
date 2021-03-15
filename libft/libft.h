@@ -48,11 +48,11 @@ typedef struct	s_map
 
 typedef struct s_player
 {
-	float	x_player;
-	float	y_player;
-	float	dir;
-	float	start;
-	float	end;
+	int	x_player;
+	int	y_player;
+	double	dir;
+	double	start;
+	double	end;
 }				t_player;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),

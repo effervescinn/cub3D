@@ -253,7 +253,6 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-// verLine(p, drawStart, drawEnd, color);
 void drawline(t_win *window, int p, int drawStart, int drawEnd, int color)
 {
     while (drawStart <= drawEnd)
@@ -275,7 +274,6 @@ int change_color(int r, int g, int b)
     b = (b) / 2;
     return (create_rgb(r, g, b));
 }
-
 
 int main()
 {
@@ -401,50 +399,33 @@ int main()
     // }
 
     // Потуги с лучами
-    double posX = (double)player.x_player; //координата игрока по x //26
-    double posY = (double)player.y_player; //координата игрока по y //9
-    double dirX = -1;                      //initial diection vector
+    double posX = (double)player.x_player + 0.5; //координата игрока по x //26
+    double posY = (double)player.y_player + 0.5; //координата игрока по y //9
+    double dirX = -1;                            //initial diection vector
     double dirY = 0;
     double planeX = 0; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
     double planeY = 0.66;
-    
+    if (dirX > 0)
+            planeY *= -1;
     int r = 0xFF;
     int g = 0x00;
-    int b = 0x00;
+    int b = 0xFF;
     int color;
+
     // double time = 0;
     // double oldTime = 0;
 
-    // double cameraX;
-    // double rayDirX;
-    // double rayDirY;
-
-    // int mapX;
-    // int mapY;
-    // double sideDistX;
-    // double sideDistY;
-    // double deltaDistX;
-    // double deltaDistY;
-    // double perpWallDist;
-    // int stepX;
-    // int stepY;
-
-    // int hit; //was there a wall hit?
-    // int side;
-    // int lineHeight;
-    // int drawStart;
-    // int drawEnd;
     int h = 800;
     int w = 1600;
 
     int p = 0;
     while (p < w)
     {
-        color = create_rgb(r, g ,b);
+        color = create_rgb(r, g, b);
         //calculate ray position and direction
         double cameraX = 2 * p / (double)w - 1; //x-coordinate in camera space
         double rayDirX = dirX + planeX * cameraX;
-        double rayDirY = dirY + planeY * cameraX;
+        double rayDirY = dirY + planeY * cameraX * -1;
         //which box of the map we're in
         int mapX = (int)posX;
         int mapY = (int)posY;
@@ -454,8 +435,10 @@ int main()
         double sideDistY;
 
         //length of ray from one x or y-side to next x or y-side
-        double deltaDistX = fabs(1 / rayDirX);
-        double deltaDistY = fabs(1 / rayDirY);
+        // double deltaDistX = fabs(1 / rayDirX);
+        // double deltaDistY = fabs(1 / rayDirY);
+        double deltaDistX = (rayDirY == 0) ? 0 : ((rayDirX == 0) ? 1 : fabs(1 / rayDirX));
+        double deltaDistY = (rayDirX == 0) ? 0 : ((rayDirY == 0) ? 1 : fabs(1 / rayDirY));
         double perpWallDist;
 
         //what direction to step in x or y-direction (either +1 or -1)
