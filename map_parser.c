@@ -275,6 +275,16 @@ int change_color(int r, int g, int b)
     return (create_rgb(r, g, b));
 }
 
+// int     key_hook(int keycode, t_win *window)
+// {
+//     if (keycode == 126)
+//     {
+//         printf("%d\n", keycode);
+
+//     }
+//     return (0);
+// }
+
 int main()
 {
     // считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
@@ -401,11 +411,13 @@ int main()
     // Потуги с лучами
     double posX = (double)player.x_player + 0.5; //координата игрока по x //26
     double posY = (double)player.y_player + 0.5; //координата игрока по y //9
-    double dirX = -1;                            //initial diection vector
-    double dirY = 0;
+    double dirX = 1; //1 - E, -1 - W                            //initial diection vector
+    double dirY = 0; // 1 - E, -1 - N
     double planeX = 0; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
-    double planeY = 0.66;
+    double planeY = 0.66; // вектор должен быть перпендикулярен вектору dir
     if (dirX > 0)
+            planeY *= -1;
+    if (dirY > 0)
             planeY *= -1;
     int r = 0xFF;
     int g = 0x00;
@@ -424,8 +436,10 @@ int main()
         color = create_rgb(r, g, b);
         //calculate ray position and direction
         double cameraX = 2 * p / (double)w - 1; //x-coordinate in camera space
-        double rayDirX = dirX + planeX * cameraX;
+
+        double rayDirX = dirX + planeX * cameraX * -1;
         double rayDirY = dirY + planeY * cameraX * -1;
+        printf("%f-%f\n", rayDirX, rayDirY);
         //which box of the map we're in
         int mapX = (int)posX;
         int mapY = (int)posY;
@@ -509,6 +523,7 @@ int main()
         drawline(&window, p, drawStart, drawEnd, color);
         p++;
     }
+    // mlx_key_hook(window.win, key_hook, &window);
     mlx_loop(window.mlx);
     return (0);
 }
