@@ -54,6 +54,9 @@ typedef struct	s_map
     int line_length;
     int endian;
 
+	double posX;
+	double posY;
+	
 	double dirX;
 	double dirY;
 	double planeX;

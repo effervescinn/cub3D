@@ -308,12 +308,6 @@ int change_color(int r, int g, int b)
 void draw_wall(t_map *map_info)
 {
     mlx_clear_window(map_info->mlx, map_info->win);
-    double posX = (double)map_info->x_player + 0.5; //координата игрока по x //26
-    double posY = (double)map_info->y_player + 0.5; //координата игрока по y //9
-    // double dirX = 0;                            //initial diection vector
-    // double dirY = -1;
-    // double planeX = 0.66; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
-    // double planeY = 0;
 
     int r = 0xFF;
     int g = 0x00;
@@ -329,8 +323,8 @@ void draw_wall(t_map *map_info)
         double rayDirX = map_info->dirX + map_info->planeX * cameraX;
         double rayDirY = map_info->dirY + map_info->planeY * cameraX;
         //which box of the map we're in
-        int mapX = (int)posX;
-        int mapY = (int)posY;
+        int mapX = (int)(map_info->posX);
+        int mapY = (int)(map_info->posY);
 
         //length of ray from current position to next x or y-side
         double sideDistX;
@@ -351,22 +345,22 @@ void draw_wall(t_map *map_info)
         if (rayDirX < 0)
         {
             stepX = -1;
-            sideDistX = (posX - mapX) * deltaDistX;
+            sideDistX = (map_info->posX - mapX) * deltaDistX;
         }
         else
         {
             stepX = 1;
-            sideDistX = (mapX + 1.0 - posX) * deltaDistX;
+            sideDistX = (mapX + 1.0 - map_info->posX) * deltaDistX;
         }
         if (rayDirY < 0)
         {
             stepY = -1;
-            sideDistY = (posY - mapY) * deltaDistY;
+            sideDistY = (map_info->posY - mapY) * deltaDistY;
         }
         else
         {
             stepY = 1;
-            sideDistY = (mapY + 1.0 - posY) * deltaDistY;
+            sideDistY = (mapY + 1.0 - map_info->posY) * deltaDistY;
         }
         //perform DDA
         while (hit == 0)
@@ -390,9 +384,9 @@ void draw_wall(t_map *map_info)
         }
         //Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
         if (side == 0)
-            perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
+            perpWallDist = (mapX - map_info->posX + (1 - stepX) / 2) / rayDirX;
         else
-            perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+            perpWallDist = (mapY - map_info->posY + (1 - stepY) / 2) / rayDirY;
 
         //Calculate height of line to draw on screen
         int lineHeight = (int)(map_info->win_h / perpWallDist);
@@ -415,9 +409,19 @@ void draw_wall(t_map *map_info)
 int key_hook(int keycode, t_map *map_info)
 {
     double rotSpeed = 0.2;
+    double moveSpeed = 1;
 
     // mlx_clear_window(map_info->mlx, map_info->win);
     if (keycode == 123)
+    {
+        double oldDirX = map_info->dirX;
+        map_info->dirX = map_info->dirX * cos(-rotSpeed) - map_info->dirY * sin(-rotSpeed);
+        map_info->dirY = (oldDirX * sin(-rotSpeed) + map_info->dirY * cos(-rotSpeed));
+        double oldPlaneX = map_info->planeX;
+        map_info->planeX = (map_info->planeX * cos(-rotSpeed) - map_info->planeY * sin(-rotSpeed));
+        map_info->planeY = (oldPlaneX * sin(-rotSpeed) + map_info->planeY * cos(-rotSpeed));
+    }
+    else if (keycode == 124)
     {
         double oldDirX = map_info->dirX;
         map_info->dirX = map_info->dirX * cos(rotSpeed) - map_info->dirY * sin(rotSpeed);
@@ -425,15 +429,21 @@ int key_hook(int keycode, t_map *map_info)
         double oldPlaneX = map_info->planeX;
         map_info->planeX = (map_info->planeX * cos(rotSpeed) - map_info->planeY * sin(rotSpeed));
         map_info->planeY = (oldPlaneX * sin(rotSpeed) + map_info->planeY * cos(rotSpeed));
-        // printf("%f\n%f\n%f\n%f\nend\n", map_info->dirX, map_info->dirY, map_info->planeX, map_info->planeY);
     }
     else if (keycode == 126)
     {
-        map_info->x_player -= 0.2;
+        if (map_info->map[(int)(map_info->posY + (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] == '0')
+            map_info->posY += (map_info->dirY) * moveSpeed;
+        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX + (map_info->dirX) * moveSpeed)] == '0')
+            map_info->posX += (map_info->dirX) * moveSpeed;
     }
+
     else if (keycode == 125)
     {
-        map_info->x_player += 0.2;
+        if (map_info->map[(int)(map_info->posY - (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] == '0')
+            map_info->posY -= (map_info->dirY) * moveSpeed;
+        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX - (map_info->dirX) * moveSpeed)] == '0')
+            map_info->posX -= (map_info->dirX) * moveSpeed;
     }
     draw_wall(map_info);
     return (0);
@@ -509,109 +519,13 @@ int main()
     map_info.img = mlx_new_image(map_info.mlx, map_info.win_w, map_info.win_h);
     map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);
 
-    // Потуги с лучами
-                    // double posX = (double)map_info.x_player + 0.5; //координата игрока по x //26
-                    // double posY = (double)map_info.y_player + 0.5; //координата игрока по y //9
-                    // double dirX = 0;                            //initial diection vector
-                    // double dirY = -1;
-                    // double planeX = 0.66; //the 2d raycaster version of camera plane, FOV is 2 * atan(0.66/1.0)=66°
-                    // double planeY = 0;
-                    // int h = 800;
-                    // int w = 1600;
+    map_info.posX = (double)map_info.x_player + 0.5; //координата игрока по x //26
+    map_info.posY = (double)map_info.y_player + 0.5;
 
-                    // int p = 0;
-                    // while (p < w)
-                    // {
-                    //     //calculate ray position and direction
-                    //     color = create_rgb(r, g, b);
-                    //     double cameraX = 2 * p / (double)w - 1; //x-coordinate in camera space
-                    //     double rayDirX = dirX + planeX * cameraX;
-                    //     double rayDirY = dirY + planeY * cameraX;
-                    //     //which box of the map we're in
-                    //     int mapX = (int)posX;
-                    //     int mapY = (int)posY;
-
-                    //     //length of ray from current position to next x or y-side
-                    //     double sideDistX;
-                    //     double sideDistY;
-
-                    //     //length of ray from one x or y-side to next x or y-side
-                    //     double deltaDistX = fabs(1 / rayDirX);
-                    //     double deltaDistY = fabs(1 / rayDirY);
-                    //     double perpWallDist;
-
-                    //     //what direction to step in x or y-direction (either +1 or -1)
-                    //     int stepX;
-                    //     int stepY;
-
-                    //     int hit = 0; //was there a wall hit?
-                    //     int side;    //was a NS or a EW wall hit?
-                    //     //calculate step and initial sideDist
-                    //     if (rayDirX < 0)
-                    //     {
-                    //         stepX = -1;
-                    //         sideDistX = (posX - mapX) * deltaDistX;
-                    //     }
-                    //     else
-                    //     {
-                    //         stepX = 1;
-                    //         sideDistX = (mapX + 1.0 - posX) * deltaDistX;
-                    //     }
-                    //     if (rayDirY < 0)
-                    //     {
-                    //         stepY = -1;
-                    //         sideDistY = (posY - mapY) * deltaDistY;
-                    //     }
-                    //     else
-                    //     {
-                    //         stepY = 1;
-                    //         sideDistY = (mapY + 1.0 - posY) * deltaDistY;
-                    //     }
-                    //     //perform DDA
-                    //     while (hit == 0)
-                    //     {
-                    //         //jump to next map square, OR in x-direction, OR in y-direction
-                    //         if (sideDistX < sideDistY)
-                    //         {
-                    //             sideDistX += deltaDistX;
-                    //             mapX += stepX;
-                    //             side = 0;
-                    //         }
-                    //         else
-                    //         {
-                    //             sideDistY += deltaDistY;
-                    //             mapY += stepY;
-                    //             side = 1;
-                    //         }
-                    //         //Check if ray has hit a wall
-                    //         if (map_info.map[mapY][mapX] != '0')
-                    //             hit = 1;
-                    //     }
-                    //     //Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
-                    //     if (side == 0)
-                    //         perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
-                    //     else
-                    //         perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
-
-                    //     //Calculate height of line to draw on screen
-                    //     int lineHeight = (int)(h / perpWallDist);
-
-                    //     //calculate lowest and highest pixel to fill in current stripe
-                    //     int drawStart = -lineHeight / 2 + h / 2;
-                    //     if (drawStart < 0)
-                    //         drawStart = 0;
-                    //     int drawEnd = lineHeight / 2 + h / 2;
-                    //     if (drawEnd >= h)
-                    //         drawEnd = h - 1;
-                    //     if (side == 1)
-                    //         color = change_color(r, g, b);
-                    //     drawline(&map_info, p, drawStart, drawEnd, color);
-                    //     p++;
-                    // }
     draw_wall(&map_info);
-    mlx_put_image_to_window(map_info.mlx, map_info.win, map_info.img, 0, 0);
+    // mlx_put_image_to_window(map_info.mlx, map_info.win, map_info.img, 0, 0);
     // mlx_key_hook(map_info.win, key_hook, &map_info);
-    mlx_hook(map_info.win, 2, 1L<<0, key_hook, &map_info);
+    mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
     mlx_loop(map_info.mlx);
     return (0);
 }
