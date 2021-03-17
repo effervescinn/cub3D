@@ -21,10 +21,9 @@
 # include <math.h>
 # define BUF_SIZE 1024
 
-typedef struct  s_win {
-        void    *mlx;
-        void    *win;
-}               t_win;
+// typedef struct  s_win {
+        
+// }               t_win;
 
 typedef struct	s_list
 {
@@ -34,6 +33,8 @@ typedef struct	s_list
 
 typedef struct	s_map
 {
+	void    *mlx;
+        void    *win;
 	int win_h;
 	int win_w;
 	char *no;
@@ -44,16 +45,22 @@ typedef struct	s_map
 	int map_len;
 	int str_len;
 	char **map;
-}				t_map;
-
-typedef struct s_player
-{
 	int	x_player;
 	int	y_player;
-	double	dir;
-	double	start;
-	double	end;
-}				t_player;
+
+	void *img;
+    char *addr;
+    int bits_per_pixel;
+    int line_length;
+    int endian;
+}				t_map;
+
+// typedef struct s_player
+// {
+// 	int	x_player;
+// 	int	y_player;
+
+// }				t_player;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
 void (*del)(void *));
