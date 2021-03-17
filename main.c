@@ -8,11 +8,18 @@ typedef struct  s_vars
     int i;
     int x;
     int y;
+
     void *img;
     char *addr;
     int bits_per_pixel;
     int line_length;
     int endian;
+
+    void *img2;
+    char *addr2;
+    int bits_per_pixel2;
+    int line_length2;
+    int endian2;
 }               t_vars;
 
 void my_mlx_pixel_put(t_vars *data, int x, int y, int color)
@@ -25,9 +32,10 @@ void my_mlx_pixel_put(t_vars *data, int x, int y, int color)
 
 int key_hook(int keycode, t_vars *vars)
 {
-    mlx_clear_window(vars->mlx, vars->win);
+    
     if (keycode == 123)
     {
+        mlx_clear_window(vars->mlx, vars->win);
         my_mlx_pixel_put(vars, vars->x, vars->y, 0xFF0000);
         mlx_put_image_to_window(vars->mlx, vars->win, vars->img, 0, 0);
         (vars->x)++;

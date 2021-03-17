@@ -53,6 +53,11 @@ typedef struct	s_map
     int bits_per_pixel;
     int line_length;
     int endian;
+
+	double dirX;
+	double dirY;
+	double planeX;
+	double planeY;
 }				t_map;
 
 // typedef struct s_player
