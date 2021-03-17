@@ -305,16 +305,48 @@ int change_color(int r, int g, int b)
     return (create_rgb(r, g, b));
 }
 
+void draw_f_c(t_map *map_info)
+{
+    int i;
+    int j;
+    int c_color = 0xC0E9F5;
+    int f_color = 0xF5DEC0;
+
+    i = 0; //height
+    j = 0; //width
+    while (i < (map_info->win_h / 2))
+    {
+        j = 0;
+        while (j < map_info->win_w)
+        {
+            my_mlx_pixel_put(map_info, j, i, c_color);
+            j++;
+        }
+        i++;
+    }
+    while (i < (map_info->win_h))
+    {
+        j = 0;
+        while (j < map_info->win_w)
+        {
+            my_mlx_pixel_put(map_info, j, i, f_color);
+            j++;
+        }
+        i++;
+    }
+}
+
 void draw_wall(t_map *map_info)
 {
-    mlx_clear_window(map_info->mlx, map_info->win);
-
+    // mlx_clear_window(map_info->mlx, map_info->win);
     int r = 0xFF;
     int g = 0x00;
     int b = 0xFF;
     int color;
-
     int p = 0;
+
+    draw_f_c(map_info);
+
     while (p < map_info->win_w)
     {
         //calculate ray position and direction
@@ -409,7 +441,7 @@ void draw_wall(t_map *map_info)
 int key_hook(int keycode, t_map *map_info)
 {
     double rotSpeed = 0.2;
-    double moveSpeed = 1;
+    double moveSpeed = 0.6;
 
     // mlx_clear_window(map_info->mlx, map_info->win);
     if (keycode == 123)
