@@ -233,29 +233,6 @@ void my_mlx_pixel_put(t_map *data, int x, int y, int color)
     *(unsigned int *)dst = color;
 }
 
-// void draw_square(t_map map_info, int x, int y, int color)
-// {
-//     int width;
-//     int height;
-//     int x_start;
-
-//     width = SCALE;
-//     height = SCALE;
-//     x_start = x;
-//     while (height)
-//     {
-//         width = SCALE;
-//         x = x_start;
-//         while (width)
-//         {
-//             my_mlx_pixel_put(map_info.mlx, map_info.win, x, y, color);
-//             x++;
-//             width--;
-//         }
-//         y++;
-//         height--;
-//     }
-// }
 
 int check_map(char ***map, t_map map_info)
 {
@@ -281,7 +258,6 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-// verLine(p, drawStart, drawEnd, color);
 void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
 {
     while (drawStart <= drawEnd)
@@ -290,19 +266,6 @@ void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
         my_mlx_pixel_put(map_info, p, drawStart, color);
         drawStart++;
     }
-}
-
-int create_rgb(int r, int g, int b)
-{
-    return (r << 16 | g << 8 | b);
-}
-
-int change_color(int r, int g, int b)
-{
-    r = (r) / 2;
-    g = (g) / 2;
-    b = (b) / 2;
-    return (create_rgb(r, g, b));
 }
 
 void draw_f_c(t_map *map_info)
@@ -464,8 +427,11 @@ void draw_wall(t_map *map_info)
         int texX = (int)(wallX * (double)(map_info->no_text.width));
         // if (side == 0 && rayDirX > 0)
         //     texX = texX;
-        // if (side == 1 && rayDirY < 0)
-        //     texX = texX;
+        if (side == 0 && rayDirX <= 0)
+            texX = map_info->ea_text.width - 1 - texX;
+        if (side == 1 && rayDirY >= 0)
+            texX = map_info->so_text.width - 1 - texX;
+            
 
         // How much to increase the texture coordinate per screen pixel
         double step = 1.0 * map_info->no_text.height / lineHeight;
@@ -478,8 +444,18 @@ void draw_wall(t_map *map_info)
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (map_info->we_text.height - 1);
             texPos += step;
+            if (side == 0 && rayDirX >= 0)
+                dst = map_info->we_text.addr + (texY * map_info->we_text.line_length + texX * (map_info->we_text.bits_per_pixel / 8));
 
-            dst = map_info->so_text.addr + (texY * map_info->so_text.line_length + texX * (map_info->so_text.bits_per_pixel / 8));
+            else if (side == 0 && rayDirX <= 0)
+                dst = map_info->ea_text.addr + (texY * map_info->ea_text.line_length + texX * (map_info->ea_text.bits_per_pixel / 8));
+
+            else if (side  == 1 && rayDirY <= 0)
+                dst = map_info->no_text.addr + (texY * map_info->no_text.line_length + texX * (map_info->no_text.bits_per_pixel / 8));
+
+            else if (side  == 1 && rayDirY >= 0)
+                dst = map_info->so_text.addr + (texY * map_info->so_text.line_length + texX * (map_info->so_text.bits_per_pixel / 8));
+
             color = *(unsigned int *)dst;
             my_mlx_pixel_put(map_info, p, y, color);
         }
