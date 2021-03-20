@@ -27,6 +27,8 @@ typedef struct  s_img {
     int bits_per_pixel;
     int line_length;
     int endian;
+	int width;
+	int height;
 }               t_img;
 
 typedef struct	s_list
@@ -65,6 +67,11 @@ typedef struct	s_map
 	double dirY;
 	double planeX;
 	double planeY;
+
+	t_img no_text;
+	t_img so_text;
+	t_img we_text;
+	t_img ea_text;
 }				t_map;
 
 // typedef struct s_player

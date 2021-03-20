@@ -2,8 +2,6 @@
 #include "libft/libft.h"
 #include <mlx.h>
 #define SCALE 30
-#define texWidth 64
-#define texHeight 64
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -338,23 +336,37 @@ void draw_f_c(t_map *map_info)
     }
 }
 
+int load_textures(t_map *map_info)
+{
+    map_info->no_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->no, &map_info->no_text.width, &map_info->no_text.height);
+    if (map_info->no_text.img == NULL)
+        return (-1);
+    map_info->no_text.addr = mlx_get_data_addr(map_info->no_text.img, &map_info->no_text.bits_per_pixel, &map_info->no_text.line_length, &map_info->no_text.endian);
+
+    map_info->so_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->so, &map_info->so_text.width, &map_info->so_text.height);
+    if (map_info->so_text.img == NULL)
+        return (-1);
+    map_info->so_text.addr = mlx_get_data_addr(map_info->so_text.img, &map_info->so_text.bits_per_pixel, &map_info->so_text.line_length, &map_info->so_text.endian);
+
+    map_info->ea_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->ea, &map_info->ea_text.width, &map_info->ea_text.height);
+    if (map_info->ea_text.img == NULL)
+        return (-1);
+    map_info->ea_text.addr = mlx_get_data_addr(map_info->ea_text.img, &map_info->ea_text.bits_per_pixel, &map_info->ea_text.line_length, &map_info->ea_text.endian);
+
+    map_info->we_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->we, &map_info->we_text.width, &map_info->we_text.height);
+    if (map_info->we_text.img == NULL)
+        return (-1);
+    map_info->we_text.addr = mlx_get_data_addr(map_info->we_text.img, &map_info->we_text.bits_per_pixel, &map_info->we_text.line_length, &map_info->we_text.endian);
+    return (0);
+}
+
 void draw_wall(t_map *map_info)
 {
-    // mlx_clear_window(map_info->mlx, map_info->win);
 
     unsigned int color;
     int p = 0;
-    t_img no_img;
 
     draw_f_c(map_info);
-
-    //textures maybe
-    int img_width;
-    int img_height;
-
-    no_img.img = mlx_xpm_file_to_image(map_info->mlx, map_info->no, &img_width, &img_height);
-    no_img.addr = mlx_get_data_addr(no_img.img, &no_img.bits_per_pixel, &no_img.line_length, &no_img.endian);
-    //Остановилась здесь
 
     while (p < map_info->win_w)
     {
@@ -419,7 +431,7 @@ void draw_wall(t_map *map_info)
                 side = 1;
             }
             //Check if ray has hit a wall
-            if (map_info->map[mapY][mapX] != '0')
+            if (map_info->map[mapY][mapX] != '0' && map_info->map[mapY][mapX] != 'N' &&  map_info->map[mapY][mapX] != 'W' &&  map_info->map[mapY][mapX] != 'E' && map_info->map[mapY][mapX] != 'S')
                 hit = 1;
         }
         //Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
@@ -440,7 +452,6 @@ void draw_wall(t_map *map_info)
             drawEnd = map_info->win_h - 1;
 
         //texturing calculations
-        int texNum = map_info->map[mapY][mapX] - '0' - 1; //1 subtracted from it so that texture 0 can be used!
         //calculate value of wallX
         double wallX; //where exactly the wall was hit
         if (side == 0)
@@ -450,13 +461,14 @@ void draw_wall(t_map *map_info)
         wallX -= floor((wallX));
 
         //x coordinate on the texture
-        int texX = (int)(wallX * (double)(texWidth));
-        if (side == 0 && rayDirX > 0)
-            texX = texX - 1 - texWidth;
-        if (side == 1 && rayDirY < 0)
-            texX = texX - 1 - texWidth;
+        int texX = (int)(wallX * (double)(map_info->no_text.width));
+        // if (side == 0 && rayDirX > 0)
+        //     texX = texX;
+        // if (side == 1 && rayDirY < 0)
+        //     texX = texX;
+
         // How much to increase the texture coordinate per screen pixel
-        double step = 1.0 * texHeight / lineHeight;
+        double step = 1.0 * map_info->no_text.height / lineHeight;
         // Starting texture coordinate
         double texPos = (drawStart - map_info->win_h / 2 + lineHeight / 2) * step;
 
@@ -464,12 +476,11 @@ void draw_wall(t_map *map_info)
         for (int y = drawStart; y < drawEnd; y++)
         {
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
-            int texY = (int)texPos & (texHeight - 1);
+            int texY = (int)texPos & (map_info->we_text.height - 1);
             texPos += step;
 
-            dst = no_img.addr + (texY * no_img.line_length + texX * (no_img.bits_per_pixel / 8));
+            dst = map_info->so_text.addr + (texY * map_info->so_text.line_length + texX * (map_info->so_text.bits_per_pixel / 8));
             color = *(unsigned int *)dst;
-            
             my_mlx_pixel_put(map_info, p, y, color);
         }
         p++;
@@ -502,17 +513,17 @@ int key_hook(int keycode, t_map *map_info)
     }
     else if (keycode == 126)
     {
-        if (map_info->map[(int)(map_info->posY + (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] == '0')
+        if (map_info->map[(int)(map_info->posY + (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] != '1')
             map_info->posY += (map_info->dirY) * moveSpeed;
-        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX + (map_info->dirX) * moveSpeed)] == '0')
+        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX + (map_info->dirX) * moveSpeed)] != '1')
             map_info->posX += (map_info->dirX) * moveSpeed;
     }
 
     else if (keycode == 125)
     {
-        if (map_info->map[(int)(map_info->posY - (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] == '0')
+        if (map_info->map[(int)(map_info->posY - (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] != '1')
             map_info->posY -= (map_info->dirY) * moveSpeed;
-        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX - (map_info->dirX) * moveSpeed)] == '0')
+        if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX - (map_info->dirX) * moveSpeed)] != '1')
             map_info->posX -= (map_info->dirX) * moveSpeed;
     }
     draw_wall(map_info);
@@ -583,12 +594,6 @@ int main()
     }
 
     //текстуры
-    // int     img_width;
-    // int     img_height;
-    // char text[map_info.win_h][map_info.win_w];
-    // char **vector;
-    // vector = (char**)malloc(1 * sizeof(char*));
-    // vector[0] = mlx_xpm_file_to_image(map_info.mlx, map_info.no, &img_width, &img_height);
 
     free(map);
     // Рисуем карту
@@ -600,6 +605,11 @@ int main()
     map_info.posX = (double)map_info.x_player + 0.5; //координата игрока по x //26
     map_info.posY = (double)map_info.y_player + 0.5;
 
+    if (load_textures(&map_info) < 0)
+    {
+        printf("%s\n", "No texture file");
+        return (-1);
+    }
     draw_wall(&map_info);
     mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
     mlx_loop(map_info.mlx);
