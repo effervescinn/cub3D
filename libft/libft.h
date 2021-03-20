@@ -21,9 +21,13 @@
 # include <math.h>
 # define BUF_SIZE 1024
 
-// typedef struct  s_win {
-        
-// }               t_win;
+typedef struct  s_img {
+	void *img;
+    char *addr;
+    int bits_per_pixel;
+    int line_length;
+    int endian;
+}               t_img;
 
 typedef struct	s_list
 {
@@ -34,7 +38,7 @@ typedef struct	s_list
 typedef struct	s_map
 {
 	void    *mlx;
-        void    *win;
+    void    *win;
 	int win_h;
 	int win_w;
 	char *no;

@@ -2,6 +2,8 @@
 #include "libft/libft.h"
 #include <mlx.h>
 #define SCALE 30
+#define texWidth 64
+#define texHeight 64
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -134,14 +136,14 @@ void set_dir(t_map *map_info, char letter)
     {
         map_info->dirX = 0;
         map_info->dirY = -1;
-        map_info->planeX = 0.66;
+        map_info->planeX = 0.57;
         map_info->planeY = 0;
     }
     else if (letter == 'S')
     {
         map_info->dirX = 0;
         map_info->dirY = 1;
-        map_info->planeX = -0.66;
+        map_info->planeX = -0.57;
         map_info->planeY = 0;
     }
     else if (letter == 'W')
@@ -149,14 +151,14 @@ void set_dir(t_map *map_info, char letter)
         map_info->dirX = -1;
         map_info->dirY = 0;
         map_info->planeX = 0;
-        map_info->planeY = -0.66;
+        map_info->planeY = -0.57;
     }
     else if (letter == 'E')
     {
         map_info->dirX = 1;
         map_info->dirY = 0;
         map_info->planeX = 0;
-        map_info->planeY = 0.66;
+        map_info->planeY = 0.57;
     }
 }
 
@@ -339,18 +341,24 @@ void draw_f_c(t_map *map_info)
 void draw_wall(t_map *map_info)
 {
     // mlx_clear_window(map_info->mlx, map_info->win);
-    int r = 0xFF;
-    int g = 0x00;
-    int b = 0xFF;
-    int color;
+
+    unsigned int color;
     int p = 0;
+    t_img no_img;
 
     draw_f_c(map_info);
+
+    //textures maybe
+    int img_width;
+    int img_height;
+
+    no_img.img = mlx_xpm_file_to_image(map_info->mlx, map_info->no, &img_width, &img_height);
+    no_img.addr = mlx_get_data_addr(no_img.img, &no_img.bits_per_pixel, &no_img.line_length, &no_img.endian);
+    //Остановилась здесь
 
     while (p < map_info->win_w)
     {
         //calculate ray position and direction
-        color = create_rgb(r, g, b);
         double cameraX = 2 * p / (double)map_info->win_w - 1; //x-coordinate in camera space
         double rayDirX = map_info->dirX + map_info->planeX * cameraX;
         double rayDirY = map_info->dirY + map_info->planeY * cameraX;
@@ -430,9 +438,40 @@ void draw_wall(t_map *map_info)
         int drawEnd = lineHeight / 2 + map_info->win_h / 2;
         if (drawEnd >= map_info->win_h)
             drawEnd = map_info->win_h - 1;
-        if (side == 1)
-            color = change_color(r, g, b);
-        drawline(map_info, p, drawStart, drawEnd, color);
+
+        //texturing calculations
+        int texNum = map_info->map[mapY][mapX] - '0' - 1; //1 subtracted from it so that texture 0 can be used!
+        //calculate value of wallX
+        double wallX; //where exactly the wall was hit
+        if (side == 0)
+            wallX = map_info->posY + perpWallDist * rayDirY;
+        else
+            wallX = map_info->posX + perpWallDist * rayDirX;
+        wallX -= floor((wallX));
+
+        //x coordinate on the texture
+        int texX = (int)(wallX * (double)(texWidth));
+        if (side == 0 && rayDirX > 0)
+            texX = texX - 1 - texWidth;
+        if (side == 1 && rayDirY < 0)
+            texX = texX - 1 - texWidth;
+        // How much to increase the texture coordinate per screen pixel
+        double step = 1.0 * texHeight / lineHeight;
+        // Starting texture coordinate
+        double texPos = (drawStart - map_info->win_h / 2 + lineHeight / 2) * step;
+
+        char *dst;
+        for (int y = drawStart; y < drawEnd; y++)
+        {
+            // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+            int texY = (int)texPos & (texHeight - 1);
+            texPos += step;
+
+            dst = no_img.addr + (texY * no_img.line_length + texX * (no_img.bits_per_pixel / 8));
+            color = *(unsigned int *)dst;
+            
+            my_mlx_pixel_put(map_info, p, y, color);
+        }
         p++;
     }
     mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
@@ -443,7 +482,6 @@ int key_hook(int keycode, t_map *map_info)
     double rotSpeed = 0.2;
     double moveSpeed = 0.6;
 
-    // mlx_clear_window(map_info->mlx, map_info->win);
     if (keycode == 123)
     {
         double oldDirX = map_info->dirX;
@@ -544,6 +582,14 @@ int main()
         return (-1);
     }
 
+    //текстуры
+    // int     img_width;
+    // int     img_height;
+    // char text[map_info.win_h][map_info.win_w];
+    // char **vector;
+    // vector = (char**)malloc(1 * sizeof(char*));
+    // vector[0] = mlx_xpm_file_to_image(map_info.mlx, map_info.no, &img_width, &img_height);
+
     free(map);
     // Рисуем карту
     map_info.mlx = mlx_init();
@@ -555,8 +601,6 @@ int main()
     map_info.posY = (double)map_info.y_player + 0.5;
 
     draw_wall(&map_info);
-    // mlx_put_image_to_window(map_info.mlx, map_info.win, map_info.img, 0, 0);
-    // mlx_key_hook(map_info.win, key_hook, &map_info);
     mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
     mlx_loop(map_info.mlx);
     return (0);
