@@ -79,14 +79,11 @@ typedef struct	s_map
 	t_img so_text;
 	t_img we_text;
 	t_img ea_text;
+	t_img spr;
+
+	int sprites_len;
+	t_spr *sprites;
 }				t_map;
-
-// typedef struct s_player
-// {
-// 	int	x_player;
-// 	int	y_player;
-
-// }				t_player;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
 void (*del)(void *));
