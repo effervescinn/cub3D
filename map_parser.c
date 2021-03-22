@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "libft/libft.h"
 #include <mlx.h>
-#define SCALE 30
+
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -262,7 +262,6 @@ void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
 {
     while (drawStart <= drawEnd)
     {
-        // mlx_pixel_put(map_info->mlx, map_info->win, p, drawStart, color);
         my_mlx_pixel_put(map_info, p, drawStart, color);
         drawStart++;
     }
@@ -328,6 +327,7 @@ void draw_wall(t_map *map_info)
 
     unsigned int color;
     int p = 0;
+    // zBuffer[map_info->win_w];
 
     draw_f_c(map_info);
 
@@ -506,6 +506,50 @@ int key_hook(int keycode, t_map *map_info)
     return (0);
 }
 
+void find_sprites(t_map *map_info, t_spr **sprites)
+{
+    int i;
+    int j;
+    int k;
+    int quantity;
+
+    i = 0;
+    j = 0;
+    k = 0;
+    quantity = 0;
+    while (i < map_info->map_len) //считаем количество спрайтов
+    {
+        j = 0;
+        while (j < map_info->str_len)
+        {
+            if (map_info->map[i][j] == '2')
+                quantity++;
+            j++;
+        }
+        i++;
+    }
+
+    *sprites = (t_spr*)malloc(sizeof(t_spr) * quantity);
+    i = 0;
+    j = 0;
+    while (i < map_info->map_len)
+    {
+        j = 0;
+        while (j < map_info->str_len)
+        {
+            if (map_info->map[i][j] == '2')
+            {
+                (*sprites)[k].x = j + 0.5;
+                (*sprites)[k].y = i + 0.5;
+                map_info->map[i][j] = '0';
+                k++;
+            }
+            j++;
+        }
+        i++;
+    }
+}
+
 int main()
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
@@ -515,6 +559,7 @@ int main()
     int i = 0;
     char **map;
     t_map map_info;
+    t_spr *sprites;
 
     map_info.win_h = 0;
     map_info.win_w = 0;
@@ -568,10 +613,12 @@ int main()
         printf("%s\n", "Error");
         return (-1);
     }
+    find_sprites(&map_info, &sprites); //потом почистить массив спрайтов
 
     //текстуры
 
     free(map);
+    printf("%f\n%f\n", sprites[1].x, sprites[1].y);
     // Рисуем карту
     map_info.mlx = mlx_init();
     map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "Test");
