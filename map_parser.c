@@ -195,7 +195,6 @@ int flood_fill(char ***map_arr, int x, int y, t_map map_info)
         return (-1);
     if ((*map_arr)[y][x] == '1')
         return (1);
-
     if ((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2')
         (*map_arr)[y][x] = '1';
     if (flood_fill(map_arr, x, y + 1, map_info) < 0)
@@ -257,14 +256,14 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
-{
-    while (drawStart <= drawEnd)
-    {
-        my_mlx_pixel_put(map_info, p, drawStart, color);
-        drawStart++;
-    }
-}
+// void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
+// {
+//     while (drawStart <= drawEnd)
+//     {
+//         my_mlx_pixel_put(map_info, p, drawStart, color);
+//         drawStart++;
+//     }
+// }
 
 void draw_f_c(t_map *map_info)
 {
@@ -343,7 +342,7 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
         j = len - 1;
         while (j > i)
         {
-            if (spriteDistance[j - 1] > spriteDistance[j])
+            if (spriteDistance[j - 1] < spriteDistance[j])
             {
                 dist_perm = spriteDistance[j - 1];
                 spriteOrder[j - 1] = j;
@@ -504,13 +503,15 @@ void draw_wall(t_map *map_info)
         spriteDistance[r] = ((map_info->posX - map_info->sprites[r].x) * (map_info->posX - map_info->sprites[r].x) + (map_info->posY - map_info->sprites[r].y) * (map_info->posY - map_info->sprites[r].y)); //sqrt not taken, unneeded
     }
     sort_sprites(spriteOrder, spriteDistance, map_info->sprites_len); // вроде как сортируется в порядке возрастания расстояния
-    // printf("%d/n", spriteOrder[0]);
+    // printf("%f\n", zBuffer[1]);
+
+
     for (int i = 0; i < map_info->sprites_len; i++)
     {
         //translate sprite position to relative to camera
         double spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
         double spriteY = map_info->sprites[spriteOrder[i]].y - map_info->posY;
-
+    // printf("%f\n%f\n", spriteX, spriteY);
         double invDet = 1.0 / (map_info->planeX * map_info->dirY - map_info->dirX * map_info->planeY); //required for correct matrix multiplication
         
         double transformX = invDet * (map_info->dirY * spriteX - map_info->dirX * spriteY);
@@ -536,24 +537,26 @@ void draw_wall(t_map *map_info)
         //loop through every vertical stripe of the sprite on screen
         for (int stripe = drawStartX; stripe < drawEndX; stripe++)
         {
-            int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * map_info->spr.height / map_info->spr.width) / 256;
+            int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * map_info->no_text.width / map_info->spr.width) / 256;
 
             if (transformY > 0 && stripe > 0 && stripe < map_info->win_w && transformY < zBuffer[stripe])
             {
                 for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
                 {
-                    // int d = (y)*256 - map_info->win_h * 128 + map_info->spr.width * 128; //256 and 128 factors to avoid floats
-                    // int texY = ((d * map_info->spr.height) / map_info->spr.width) / 256;
-                    // // Uint32 color = texture[sprite[spriteOrder[i]].texture][map_info->spr.width * texY + texX]; //get current color from the texture
-                    // // dst = map_info->spr.addr + (texY * map_info->spr.line_length + texX * (map_info->spr.bits_per_pixel / 8));
-                    // color = *(unsigned int *)(map_info->spr.addr + (texY * map_info->spr.line_length + texX * (map_info->spr.bits_per_pixel / 8)));
+                    // int d = (y)*256 - map_info->win_h * 128 + map_info->no_text.width * 128; //256 and 128 factors to avoid floats
+                    // int texY = ((d * map_info->no_text.height) / map_info->no_text.width) / 256;
+                    // Uint32 color = texture[sprite[spriteOrder[i]].texture][map_info->spr.width * texY + texX]; //get current color from the texture
+                    // dst = map_info->spr.addr + (texY * map_info->spr.line_length + texX * (map_info->spr.bits_per_pixel / 8));
+                    // color = *(unsigned int *)(map_info->no_text.addr + (texY * map_info->no_text.line_length + texX * (map_info->no_text.bits_per_pixel / 8)));
                     // if ((color & 0x00FFFFFF) != 0)
-                    color = 0xFFFFFF;
-                        my_mlx_pixel_put(map_info, y, stripe, color); //paint pixel if it isn't black, black is the invisible color
+                    color = 0xFF00FF;
+                        my_mlx_pixel_put(map_info, stripe, y, color); //paint pixel if it isn't black, black is the invisible color
                 }
             }
         }
     }
+
+
 
     mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
 }
