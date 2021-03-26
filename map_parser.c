@@ -256,15 +256,6 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-// void drawline(t_map *map_info, int p, int drawStart, int drawEnd, int color)
-// {
-//     while (drawStart <= drawEnd)
-//     {
-//         my_mlx_pixel_put(map_info, p, drawStart, color);
-//         drawStart++;
-//     }
-// }
-
 void draw_f_c(t_map *map_info)
 {
     int i;
@@ -358,7 +349,6 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
 
 void draw_wall(t_map *map_info)
 {
-
     unsigned int color;
     int p = 0;
     double zBuffer[map_info->win_w];
@@ -471,49 +461,38 @@ void draw_wall(t_map *map_info)
         // Starting texture coordinate
         double texPos = (drawStart - map_info->win_h / 2 + lineHeight / 2) * step;
 
-        char *dst;
         for (int y = drawStart; y < drawEnd; y++)
         {
             // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (map_info->we_text.height - 1);
             texPos += step;
             if (side == 0 && rayDirX >= 0)
-                dst = map_info->we_text.addr + (texY * map_info->we_text.line_length + texX * (map_info->we_text.bits_per_pixel / 8));
-
+                color = ((unsigned int *)(map_info->we_text.addr))[map_info->we_text.width * texY + texX];
             else if (side == 0 && rayDirX <= 0)
-                dst = map_info->ea_text.addr + (texY * map_info->ea_text.line_length + texX * (map_info->ea_text.bits_per_pixel / 8));
-
+                color = ((unsigned int *)(map_info->ea_text.addr))[map_info->ea_text.width * texY + texX];
             else if (side == 1 && rayDirY <= 0)
-                dst = map_info->no_text.addr + (texY * map_info->no_text.line_length + texX * (map_info->no_text.bits_per_pixel / 8));
-
+                color = ((unsigned int *)(map_info->no_text.addr))[map_info->no_text.width * texY + texX];
             else if (side == 1 && rayDirY >= 0)
-                dst = map_info->so_text.addr + (texY * map_info->so_text.line_length + texX * (map_info->so_text.bits_per_pixel / 8));
-
-            color = *(unsigned int *)dst;
+                color = ((unsigned int *)(map_info->so_text.addr))[map_info->so_text.width * texY + texX];
             my_mlx_pixel_put(map_info, p, y, color);
         }
         zBuffer[p] = perpWallDist;
         p++;
     }
 
-    
     for (int r = 0; r < map_info->sprites_len; r++) //считаем расстояние до спрайтов
     {
         spriteOrder[r] = r;
         spriteDistance[r] = ((map_info->posX - map_info->sprites[r].x) * (map_info->posX - map_info->sprites[r].x) + (map_info->posY - map_info->sprites[r].y) * (map_info->posY - map_info->sprites[r].y)); //sqrt not taken, unneeded
     }
     sort_sprites(spriteOrder, spriteDistance, map_info->sprites_len); // вроде как сортируется в порядке возрастания расстояния
-    // printf("%f\n", zBuffer[1]);
-
-
     for (int i = 0; i < map_info->sprites_len; i++)
     {
         //translate sprite position to relative to camera
         double spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
         double spriteY = map_info->sprites[spriteOrder[i]].y - map_info->posY;
-    // printf("%f\n%f\n", spriteX, spriteY);
         double invDet = 1.0 / (map_info->planeX * map_info->dirY - map_info->dirX * map_info->planeY); //required for correct matrix multiplication
-        
+
         double transformX = invDet * (map_info->dirY * spriteX - map_info->dirX * spriteY);
         double transformY = invDet * ((map_info->planeY) * -1 * spriteX + map_info->planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
         int spriteScreenX = (int)((map_info->win_w / 2) * (1 + transformX / transformY));
@@ -537,26 +516,21 @@ void draw_wall(t_map *map_info)
         //loop through every vertical stripe of the sprite on screen
         for (int stripe = drawStartX; stripe < drawEndX; stripe++)
         {
-            int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * map_info->no_text.width / map_info->spr.width) / 256;
+            int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * 64 / spriteWidth) / 256;
 
             if (transformY > 0 && stripe > 0 && stripe < map_info->win_w && transformY < zBuffer[stripe])
             {
                 for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
                 {
-                    // int d = (y)*256 - map_info->win_h * 128 + map_info->no_text.width * 128; //256 and 128 factors to avoid floats
-                    // int texY = ((d * map_info->no_text.height) / map_info->no_text.width) / 256;
-                    // Uint32 color = texture[sprite[spriteOrder[i]].texture][map_info->spr.width * texY + texX]; //get current color from the texture
-                    // dst = map_info->spr.addr + (texY * map_info->spr.line_length + texX * (map_info->spr.bits_per_pixel / 8));
-                    // color = *(unsigned int *)(map_info->no_text.addr + (texY * map_info->no_text.line_length + texX * (map_info->no_text.bits_per_pixel / 8)));
-                    // if ((color & 0x00FFFFFF) != 0)
-                    color = 0xFF00FF;
+                    int d = (y)*256 - map_info->win_h * 128 + spriteHeight * 128; //256 and 128 factors to avoid floats
+                    int texY = ((d * map_info->no_text.height) / spriteHeight) / 256;
+                    color = ((unsigned int *)(map_info->spr.addr))[map_info->no_text.width * texY + texX];
+                    if ((color & 0x00FFFFFF) != 0)
                         my_mlx_pixel_put(map_info, stripe, y, color); //paint pixel if it isn't black, black is the invisible color
                 }
             }
         }
     }
-
-
 
     mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
 }
@@ -648,7 +622,7 @@ int find_sprites(t_map *map_info, t_spr **sprites)
     return (quantity);
 }
 
-int main()
+int main(int argc, char **argv)
 {
     //считываем весь файл конфигурации в одну строку, дальше читаем с помощью сплита и записываем в двумерный массив
     int fd;
@@ -715,7 +689,6 @@ int main()
     //текстуры
 
     free(map);
-    printf("%f\n%f\n", map_info.sprites[1].x, map_info.sprites[1].y);
     // Рисуем карту
     map_info.mlx = mlx_init();
     map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "Test");
@@ -737,7 +710,11 @@ int main()
         return (-1);
     }
     draw_wall(&map_info);
-    mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
+    if (argc < 2)
+    {
+        mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
     mlx_loop(map_info.mlx);
+    }
+    
     return (0);
 }
