@@ -21,10 +21,42 @@
 # include <math.h>
 # define BUF_SIZE 1024
 
-typedef struct  s_win {
-        void    *mlx;
-        void    *win;
-}               t_win;
+# define ESC 53
+# define KEY_W 13
+# define KEY_S 1
+# define KEY_A 0
+# define KEY_D 2
+// # define KEY_Q 124
+// # define KEY_E 124
+# define KEY_LEFT 123
+# define KEY_RIGHT 124
+
+typedef struct s_keys {
+    int w;
+    int s;
+    int a;
+    int d;
+
+	int left;
+	int right;
+}				t_keys;
+
+typedef struct	s_spr
+{
+	double x;
+	double y;
+}				t_spr;
+
+typedef struct  s_img
+{
+	void *img;
+    char *addr;
+    int bits_per_pixel;
+    int line_length;
+    int endian;
+	int width;
+	int height;
+}               t_img;
 
 typedef struct	s_list
 {
@@ -34,6 +66,10 @@ typedef struct	s_list
 
 typedef struct	s_map
 {
+	t_keys keys;
+	
+	void    *mlx;
+    void    *win;
 	int win_h;
 	int win_w;
 	char *no;
@@ -44,16 +80,32 @@ typedef struct	s_map
 	int map_len;
 	int str_len;
 	char **map;
-}				t_map;
-
-typedef struct s_player
-{
 	int	x_player;
 	int	y_player;
-	double	dir;
-	double	start;
-	double	end;
-}				t_player;
+
+	void *img;
+    char *addr;
+    int bits_per_pixel;
+    int line_length;
+    int endian;
+
+	double posX;
+	double posY;
+	
+	double dirX;
+	double dirY;
+	double planeX;
+	double planeY;
+
+	t_img no_text;
+	t_img so_text;
+	t_img we_text;
+	t_img ea_text;
+	t_img spr;
+
+	int sprites_len;
+	t_spr *sprites;
+}				t_map;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
 void (*del)(void *));
