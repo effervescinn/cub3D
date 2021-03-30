@@ -2,93 +2,93 @@
 #include "libft/libft.h"
 #include <mlx.h>
 
-const int BYTES_PER_PIXEL = 3; /// red, green, & blue
-const int FILE_HEADER_SIZE = 14;
-const int INFO_HEADER_SIZE = 40;
+// const int BYTES_PER_PIXEL = 3; /// red, green, & blue
+// const int FILE_HEADER_SIZE = 14;
+// const int INFO_HEADER_SIZE = 40;
 
-void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName);
-unsigned char *createBitmapFileHeader(int height, int stride);
-unsigned char *createBitmapInfoHeader(int height, int width);
+// void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName);
+// unsigned char *createBitmapFileHeader(int height, int stride);
+// unsigned char *createBitmapInfoHeader(int height, int width);
 
-void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
-{
-    int widthInBytes = width * BYTES_PER_PIXEL;
+// void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
+// {
+//     int widthInBytes = width * BYTES_PER_PIXEL;
 
-    unsigned char padding[3] = {0, 0, 0};
-    int paddingSize = (4 - (widthInBytes) % 4) % 4;
+//     unsigned char padding[3] = {0, 0, 0};
+//     int paddingSize = (4 - (widthInBytes) % 4) % 4;
 
-    int stride = (widthInBytes) + paddingSize;
+//     int stride = (widthInBytes) + paddingSize;
 
-    FILE *imageFile = fopen(imageFileName, "wb");
+//     FILE *imageFile = fopen(imageFileName, "wb");
 
-    unsigned char *fileHeader = createBitmapFileHeader(height, stride);
-    fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
+//     unsigned char *fileHeader = createBitmapFileHeader(height, stride);
+//     fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
 
-    unsigned char *infoHeader = createBitmapInfoHeader(height, width);
-    fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
+//     unsigned char *infoHeader = createBitmapInfoHeader(height, width);
+//     fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
 
-    int i;
-    for (i = 0; i < height; i++)
-    {
-        fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
-        fwrite(padding, 1, paddingSize, imageFile);
-    }
+//     int i;
+//     for (i = 0; i < height; i++)
+//     {
+//         fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
+//         fwrite(padding, 1, paddingSize, imageFile);
+//     }
 
-    fclose(imageFile);
-}
+//     fclose(imageFile);
+// }
 
-unsigned char *createBitmapFileHeader(int height, int stride)
-{
-    int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
+// unsigned char *createBitmapFileHeader(int height, int stride)
+// {
+//     int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
 
-    static unsigned char fileHeader[] = {
-        0, 0,       /// signature
-        0, 0, 0, 0, /// image file size in bytes
-        0, 0, 0, 0, /// reserved
-        0, 0, 0, 0, /// start of pixel array
-    };
+//     static unsigned char fileHeader[] = {
+//         0, 0,       /// signature
+//         0, 0, 0, 0, /// image file size in bytes
+//         0, 0, 0, 0, /// reserved
+//         0, 0, 0, 0, /// start of pixel array
+//     };
 
-    fileHeader[0] = (unsigned char)('B');
-    fileHeader[1] = (unsigned char)('M');
-    fileHeader[2] = (unsigned char)(fileSize);
-    fileHeader[3] = (unsigned char)(fileSize >> 8);
-    fileHeader[4] = (unsigned char)(fileSize >> 16);
-    fileHeader[5] = (unsigned char)(fileSize >> 24);
-    fileHeader[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
+//     fileHeader[0] = (unsigned char)('B');
+//     fileHeader[1] = (unsigned char)('M');
+//     fileHeader[2] = (unsigned char)(fileSize);
+//     fileHeader[3] = (unsigned char)(fileSize >> 8);
+//     fileHeader[4] = (unsigned char)(fileSize >> 16);
+//     fileHeader[5] = (unsigned char)(fileSize >> 24);
+//     fileHeader[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
 
-    return fileHeader;
-}
+//     return fileHeader;
+// }
 
-unsigned char *createBitmapInfoHeader(int height, int width)
-{
-    static unsigned char infoHeader[] = {
-        0, 0, 0, 0, /// header size
-        0, 0, 0, 0, /// image width
-        0, 0, 0, 0, /// image height
-        0, 0,       /// number of color planes
-        0, 0,       /// bits per pixel
-        0, 0, 0, 0, /// compression
-        0, 0, 0, 0, /// image size
-        0, 0, 0, 0, /// horizontal resolution
-        0, 0, 0, 0, /// vertical resolution
-        0, 0, 0, 0, /// colors in color table
-        0, 0, 0, 0, /// important color count
-    };
+// unsigned char *createBitmapInfoHeader(int height, int width)
+// {
+//     static unsigned char infoHeader[] = {
+//         0, 0, 0, 0, /// header size
+//         0, 0, 0, 0, /// image width
+//         0, 0, 0, 0, /// image height
+//         0, 0,       /// number of color planes
+//         0, 0,       /// bits per pixel
+//         0, 0, 0, 0, /// compression
+//         0, 0, 0, 0, /// image size
+//         0, 0, 0, 0, /// horizontal resolution
+//         0, 0, 0, 0, /// vertical resolution
+//         0, 0, 0, 0, /// colors in color table
+//         0, 0, 0, 0, /// important color count
+//     };
 
-    infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
-    infoHeader[4] = (unsigned char)(width);
-    infoHeader[5] = (unsigned char)(width >> 8);
-    infoHeader[6] = (unsigned char)(width >> 16);
-    infoHeader[7] = (unsigned char)(width >> 24);
-    infoHeader[8] = (unsigned char)(height);
-    infoHeader[9] = (unsigned char)(height >> 8);
-    infoHeader[10] = (unsigned char)(height >> 16);
-    infoHeader[11] = (unsigned char)(height >> 24);
-    infoHeader[12] = (unsigned char)(1);
-    infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
+//     infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
+//     infoHeader[4] = (unsigned char)(width);
+//     infoHeader[5] = (unsigned char)(width >> 8);
+//     infoHeader[6] = (unsigned char)(width >> 16);
+//     infoHeader[7] = (unsigned char)(width >> 24);
+//     infoHeader[8] = (unsigned char)(height);
+//     infoHeader[9] = (unsigned char)(height >> 8);
+//     infoHeader[10] = (unsigned char)(height >> 16);
+//     infoHeader[11] = (unsigned char)(height >> 24);
+//     infoHeader[12] = (unsigned char)(1);
+//     infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
 
-    return infoHeader;
-}
+//     return infoHeader;
+// }
 
 void ft_strcpy(char *dst, const char *src)
 {
@@ -591,47 +591,68 @@ void draw_wall(t_map *map_info)
 
             if (transformY > 0 && stripe > 0 && stripe < map_info->win_w && transformY < zBuffer[stripe])
             {
-                for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
+                for (int y = drawStartY; y < drawEndY; y++)
                 {
-                    int d = (y)*256 - map_info->win_h * 128 + spriteHeight * 128; //256 and 128 factors to avoid floats
+                    int d = (y)*256 - map_info->win_h * 128 + spriteHeight * 128;
                     int texY = ((d * map_info->no_text.height) / spriteHeight) / 256;
                     color = ((unsigned int *)(map_info->spr.addr))[map_info->no_text.width * texY + texX];
-                    // printf("%f\n", (unsigned char)((10774847 & 0xFF0000) >> 16));
                     if ((color & 0xFFFFFF) != 0)
-                        my_mlx_pixel_put(map_info, stripe, y, color); //paint pixel if it isn't black, black is the invisible color
+                        my_mlx_pixel_put(map_info, stripe, y, color);
                 }
             }
         }
     }
-    // for(int l =0; l < map_info->win_w; l++)
-    //     printf("%x\n", (map_info->addr[3] & 0x0000FF));
+
     if (map_info->screenshot == 1)
     {
-        int height = map_info->win_h;
-        int width = map_info->win_w;
-        unsigned char image[height][width][BYTES_PER_PIXEL];
-        char *imageFileName = (char *)"screen.bmp";
+        int fd;
+        unsigned char bitmap[54];
+        int i = 0;
+        int filesize;
+        unsigned int *tmp;
 
-        int i, j, k;
-        i = 0;
-        // for (i = height - 1; i >= 0; i--)
-        while (i < height)
+        filesize = map_info->win_w * map_info->win_h * 4 + 54;
+        fd = open("screen.bmp", O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+        while (i < 54)
         {
-            j = 0;
-            k = 0;
-            while (j < width)
-            {
-                image[i][j][0] = (unsigned char)((((map_info->addr))[i * width * 4 + k]) & 0x0000FF);                 ///red
-                image[i][j][1] = (unsigned char)((((map_info->addr))[i * width * 4 + k + 1]) & 0x0000FF);                  ///green
-                image[i][j][2] = (unsigned char)((((map_info->addr))[i * width * 4 + k + 2]) & 0x0000FF); ///blue
-                k +=4;
-                j++;
-            }
+            bitmap[i] = (unsigned char)0;
             i++;
         }
-        generateBitmapImage((unsigned char*) image, height, width, imageFileName);
+        bitmap[0] = 'B';
+        bitmap[1] = 'M';
+        bitmap[2] = filesize;
+        bitmap[10] = 54;
+        bitmap[14] = 40;
+        *((int *)(bitmap + 2)) = filesize;
+        *(int *)(bitmap + 10) = 54;
+        *(int *)(bitmap + 14) = 40;
+        *(int *)(bitmap + 18) = map_info->win_w;
+        *(int *)(bitmap + 22) = map_info->win_h;
+        *(bitmap + 26) = 1;
+        *(bitmap + 28) = 32;
+
+        write(fd, bitmap, 54);
+        printf("%u\n", bitmap[18]);
+        int l;
+        int s;
+        l = (map_info->win_h - 1) * map_info->win_w;
+        tmp = (unsigned int *)map_info->addr;
+
+        while (l >= 0)
+        {
+            s = 0;
+            while (s < map_info->win_w)
+            {
+                write(fd, &tmp[l], 4);
+                s++;
+                l++;
+            }
+            l -= 2 * map_info->win_w;
+        }
+        close(fd);
         close_all(map_info);
     }
+
     mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
 }
 
