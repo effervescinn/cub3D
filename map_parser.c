@@ -2,6 +2,94 @@
 #include "libft/libft.h"
 #include <mlx.h>
 
+const int BYTES_PER_PIXEL = 3; /// red, green, & blue
+const int FILE_HEADER_SIZE = 14;
+const int INFO_HEADER_SIZE = 40;
+
+void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName);
+unsigned char *createBitmapFileHeader(int height, int stride);
+unsigned char *createBitmapInfoHeader(int height, int width);
+
+void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
+{
+    int widthInBytes = width * BYTES_PER_PIXEL;
+
+    unsigned char padding[3] = {0, 0, 0};
+    int paddingSize = (4 - (widthInBytes) % 4) % 4;
+
+    int stride = (widthInBytes) + paddingSize;
+
+    FILE *imageFile = fopen(imageFileName, "wb");
+
+    unsigned char *fileHeader = createBitmapFileHeader(height, stride);
+    fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
+
+    unsigned char *infoHeader = createBitmapInfoHeader(height, width);
+    fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
+
+    int i;
+    for (i = 0; i < height; i++)
+    {
+        fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
+        fwrite(padding, 1, paddingSize, imageFile);
+    }
+
+    fclose(imageFile);
+}
+
+unsigned char *createBitmapFileHeader(int height, int stride)
+{
+    int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
+
+    static unsigned char fileHeader[] = {
+        0, 0,       /// signature
+        0, 0, 0, 0, /// image file size in bytes
+        0, 0, 0, 0, /// reserved
+        0, 0, 0, 0, /// start of pixel array
+    };
+
+    fileHeader[0] = (unsigned char)('B');
+    fileHeader[1] = (unsigned char)('M');
+    fileHeader[2] = (unsigned char)(fileSize);
+    fileHeader[3] = (unsigned char)(fileSize >> 8);
+    fileHeader[4] = (unsigned char)(fileSize >> 16);
+    fileHeader[5] = (unsigned char)(fileSize >> 24);
+    fileHeader[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
+
+    return fileHeader;
+}
+
+unsigned char *createBitmapInfoHeader(int height, int width)
+{
+    static unsigned char infoHeader[] = {
+        0, 0, 0, 0, /// header size
+        0, 0, 0, 0, /// image width
+        0, 0, 0, 0, /// image height
+        0, 0,       /// number of color planes
+        0, 0,       /// bits per pixel
+        0, 0, 0, 0, /// compression
+        0, 0, 0, 0, /// image size
+        0, 0, 0, 0, /// horizontal resolution
+        0, 0, 0, 0, /// vertical resolution
+        0, 0, 0, 0, /// colors in color table
+        0, 0, 0, 0, /// important color count
+    };
+
+    infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
+    infoHeader[4] = (unsigned char)(width);
+    infoHeader[5] = (unsigned char)(width >> 8);
+    infoHeader[6] = (unsigned char)(width >> 16);
+    infoHeader[7] = (unsigned char)(width >> 24);
+    infoHeader[8] = (unsigned char)(height);
+    infoHeader[9] = (unsigned char)(height >> 8);
+    infoHeader[10] = (unsigned char)(height >> 16);
+    infoHeader[11] = (unsigned char)(height >> 24);
+    infoHeader[12] = (unsigned char)(1);
+    infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
+
+    return infoHeader;
+}
+
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -347,6 +435,12 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
     }
 }
 
+int close_all(void *arg)
+{
+    exit(0);
+    return (0);
+}
+
 void draw_wall(t_map *map_info)
 {
     unsigned int color;
@@ -359,30 +453,24 @@ void draw_wall(t_map *map_info)
 
     while (p < map_info->win_w)
     {
-        //calculate ray position and direction
         double cameraX = 2 * p / (double)map_info->win_w - 1; //x-coordinate in camera space
         double rayDirX = map_info->dirX + map_info->planeX * cameraX;
         double rayDirY = map_info->dirY + map_info->planeY * cameraX;
-        //which box of the map we're in
         int mapX = (int)(map_info->posX);
         int mapY = (int)(map_info->posY);
 
-        //length of ray from current position to next x or y-side
         double sideDistX;
         double sideDistY;
 
-        //length of ray from one x or y-side to next x or y-side
         double deltaDistX = fabs(1 / rayDirX);
         double deltaDistY = fabs(1 / rayDirY);
         double perpWallDist;
 
-        //what direction to step in x or y-direction (either +1 or -1)
         int stepX;
         int stepY;
 
         int hit = 0; //was there a wall hit?
         int side;    //was a NS or a EW wall hit?
-        //calculate step and initial sideDist
         if (rayDirX < 0)
         {
             stepX = -1;
@@ -403,10 +491,8 @@ void draw_wall(t_map *map_info)
             stepY = 1;
             sideDistY = (mapY + 1.0 - map_info->posY) * deltaDistY;
         }
-        //perform DDA
         while (hit == 0)
         {
-            //jump to next map square, OR in x-direction, OR in y-direction
             if (sideDistX < sideDistY)
             {
                 sideDistX += deltaDistX;
@@ -419,20 +505,16 @@ void draw_wall(t_map *map_info)
                 mapY += stepY;
                 side = 1;
             }
-            //Check if ray has hit a wall
             if (map_info->map[mapY][mapX] != '0' && map_info->map[mapY][mapX] != 'N' && map_info->map[mapY][mapX] != 'W' && map_info->map[mapY][mapX] != 'E' && map_info->map[mapY][mapX] != 'S')
                 hit = 1;
         }
-        //Calculate distance projected on camera direction (Euclidean distance will give fisheye effect!)
         if (side == 0)
             perpWallDist = (mapX - map_info->posX + (1 - stepX) / 2) / rayDirX;
         else
             perpWallDist = (mapY - map_info->posY + (1 - stepY) / 2) / rayDirY;
 
-        //Calculate height of line to draw on screen
         int lineHeight = (int)(map_info->win_h / perpWallDist);
 
-        //calculate lowest and highest pixel to fill in current stripe
         int drawStart = -lineHeight / 2 + map_info->win_h / 2;
         if (drawStart < 0)
             drawStart = 0;
@@ -440,8 +522,6 @@ void draw_wall(t_map *map_info)
         if (drawEnd >= map_info->win_h)
             drawEnd = map_info->win_h - 1;
 
-        //texturing calculations
-        //calculate value of wallX
         double wallX; //where exactly the wall was hit
         if (side == 0)
             wallX = map_info->posY + perpWallDist * rayDirY;
@@ -449,21 +529,17 @@ void draw_wall(t_map *map_info)
             wallX = map_info->posX + perpWallDist * rayDirX;
         wallX -= floor((wallX));
 
-        //x coordinate on the texture
         int texX = (int)(wallX * (double)(map_info->no_text.width));
         if (side == 0 && rayDirX <= 0)
             texX = map_info->ea_text.width - 1 - texX;
         if (side == 1 && rayDirY >= 0)
             texX = map_info->so_text.width - 1 - texX;
 
-        // How much to increase the texture coordinate per screen pixel
         double step = 1.0 * map_info->no_text.height / lineHeight;
-        // Starting texture coordinate
         double texPos = (drawStart - map_info->win_h / 2 + lineHeight / 2) * step;
 
         for (int y = drawStart; y < drawEnd; y++)
         {
-            // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
             int texY = (int)texPos & (map_info->we_text.height - 1);
             texPos += step;
             if (side == 0 && rayDirX >= 0)
@@ -488,7 +564,6 @@ void draw_wall(t_map *map_info)
     sort_sprites(spriteOrder, spriteDistance, map_info->sprites_len); // вроде как сортируется в порядке возрастания расстояния
     for (int i = 0; i < map_info->sprites_len; i++)
     {
-        //translate sprite position to relative to camera
         double spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
         double spriteY = map_info->sprites[spriteOrder[i]].y - map_info->posY;
         double invDet = 1.0 / (map_info->planeX * map_info->dirY - map_info->dirX * map_info->planeY); //required for correct matrix multiplication
@@ -496,16 +571,13 @@ void draw_wall(t_map *map_info)
         double transformX = invDet * (map_info->dirY * spriteX - map_info->dirX * spriteY);
         double transformY = invDet * ((map_info->planeY) * -1 * spriteX + map_info->planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
         int spriteScreenX = (int)((map_info->win_w / 2) * (1 + transformX / transformY));
-        //calculate height of the sprite on screen
         int spriteHeight = abs((int)(map_info->win_h / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
-        //calculate lowest and highest pixel to fill in current stripe
         int drawStartY = -spriteHeight / 2 + map_info->win_h / 2;
         if (drawStartY < 0)
             drawStartY = 0;
         int drawEndY = spriteHeight / 2 + map_info->win_h / 2;
         if (drawEndY >= map_info->win_h)
             drawEndY = map_info->win_h - 1;
-        //calculate width of the sprite
         int spriteWidth = abs((int)(map_info->win_h / (transformY)));
         int drawStartX = -spriteWidth / 2 + spriteScreenX;
         if (drawStartX < 0)
@@ -513,7 +585,6 @@ void draw_wall(t_map *map_info)
         int drawEndX = spriteWidth / 2 + spriteScreenX;
         if (drawEndX >= map_info->win_w)
             drawEndX = map_info->win_w - 1;
-        //loop through every vertical stripe of the sprite on screen
         for (int stripe = drawStartX; stripe < drawEndX; stripe++)
         {
             int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * 64 / spriteWidth) / 256;
@@ -525,37 +596,50 @@ void draw_wall(t_map *map_info)
                     int d = (y)*256 - map_info->win_h * 128 + spriteHeight * 128; //256 and 128 factors to avoid floats
                     int texY = ((d * map_info->no_text.height) / spriteHeight) / 256;
                     color = ((unsigned int *)(map_info->spr.addr))[map_info->no_text.width * texY + texX];
-                    if ((color & 0x00FFFFFF) != 0)
+                    // printf("%f\n", (unsigned char)((10774847 & 0xFF0000) >> 16));
+                    if ((color & 0xFFFFFF) != 0)
                         my_mlx_pixel_put(map_info, stripe, y, color); //paint pixel if it isn't black, black is the invisible color
                 }
             }
         }
     }
+    // for(int l =0; l < map_info->win_w; l++)
+    //     printf("%x\n", (map_info->addr[3] & 0x0000FF));
+    if (map_info->screenshot == 1)
+    {
+        int height = map_info->win_h;
+        int width = map_info->win_w;
+        unsigned char image[height][width][BYTES_PER_PIXEL];
+        char *imageFileName = (char *)"screen.bmp";
 
+        int i, j, k;
+        i = 0;
+        // for (i = height - 1; i >= 0; i--)
+        while (i < height)
+        {
+            j = 0;
+            k = 0;
+            while (j < width)
+            {
+                image[i][j][0] = (unsigned char)((((map_info->addr))[i * width * 4 + k]) & 0x0000FF);                 ///red
+                image[i][j][1] = (unsigned char)((((map_info->addr))[i * width * 4 + k + 1]) & 0x0000FF);                  ///green
+                image[i][j][2] = (unsigned char)((((map_info->addr))[i * width * 4 + k + 2]) & 0x0000FF); ///blue
+                k +=4;
+                j++;
+            }
+            i++;
+        }
+        generateBitmapImage((unsigned char*) image, height, width, imageFileName);
+        close_all(map_info);
+    }
     mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
 }
-
-// int escape(int keycode, t_map * map_info)
-// {
-//     if (keycode == 53)
-//     {
-//         mlx_destroy_image(map_info->mlx, map_info->img);
-//         return (-3);
-//         // mlx_destroy_window(map_info->mlx, map_info->win);
-//     }
-// }
 
 int key_hook(t_map *map_info)
 {
     double rotSpeed = 0.03;
     double moveSpeed = 0.08;
 
-
-    // if (keycode == 53)
-    // {
-    //     mlx_destroy_window(map_info->mlx, map_info->win);
-    //     exit(0);
-    // }
     if (map_info->keys.left == 1)
     {
         double oldDirX = map_info->dirX;
@@ -581,7 +665,6 @@ int key_hook(t_map *map_info)
         if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX + (map_info->dirX) * moveSpeed)] != '1')
             map_info->posX += (map_info->dirX) * moveSpeed;
     }
-
     if (map_info->keys.s == 1)
     {
         if (map_info->map[(int)(map_info->posY - (map_info->dirY) * moveSpeed)][(int)(map_info->posX)] != '1')
@@ -589,7 +672,6 @@ int key_hook(t_map *map_info)
         if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX - (map_info->dirX) * moveSpeed)] != '1')
             map_info->posX -= (map_info->dirX) * moveSpeed;
     }
-
     if (map_info->keys.a == 1)
     {
         if (map_info->map[(int)(map_info->posY - (map_info->dirX) * moveSpeed)][(int)(map_info->posX)] != '1')
@@ -597,7 +679,6 @@ int key_hook(t_map *map_info)
         if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX + (map_info->dirY) * moveSpeed)] != '1')
             map_info->posX += (map_info->dirY) * moveSpeed;
     }
-
     if (map_info->keys.d == 1)
     {
         if (map_info->map[(int)(map_info->posY + (map_info->dirX) * moveSpeed)][(int)(map_info->posX)] != '1')
@@ -667,47 +748,41 @@ void free_arr(char **arr)
     free(arr);
 }
 
-int	handle_pressed_key(int keycode, t_map *map_info)
+int handle_pressed_key(int keycode, t_map *map_info)
 {
-	if (keycode == KEY_W)
-		map_info->keys.w = 1;
-	if (keycode == KEY_S)
-		map_info->keys.s = 1;
-	if (keycode == KEY_A)
-		map_info->keys.a = 1;
-	if (keycode == KEY_D)
-		map_info->keys.d = 1;
-	if (keycode == KEY_LEFT)
-		map_info->keys.left = 1;
-	if (keycode == KEY_RIGHT)
-		map_info->keys.right = 1;
-	return (0);
-}
-
-int	handle_unpressed_key(int keycode, t_map *map_info)
-{
-	if (keycode == KEY_W)
-		map_info->keys.w = 0;
-	if (keycode == KEY_S)
-		map_info->keys.s = 0;
-	if (keycode == KEY_A)
-		map_info->keys.a = 0;
-	if (keycode == KEY_D)
-		map_info->keys.d = 0;
-	if (keycode == KEY_LEFT)
-		map_info->keys.left = 0;
-	if (keycode == KEY_RIGHT)
-		map_info->keys.right = 0;
-	return (0);
-}
-
-int close_all(void *arg) {
-    exit(0);
+    if (keycode == KEY_W)
+        map_info->keys.w = 1;
+    if (keycode == KEY_S)
+        map_info->keys.s = 1;
+    if (keycode == KEY_A)
+        map_info->keys.a = 1;
+    if (keycode == KEY_D)
+        map_info->keys.d = 1;
+    if (keycode == KEY_LEFT)
+        map_info->keys.left = 1;
+    if (keycode == KEY_RIGHT)
+        map_info->keys.right = 1;
     return (0);
 }
 
+int handle_unpressed_key(int keycode, t_map *map_info)
+{
+    if (keycode == KEY_W)
+        map_info->keys.w = 0;
+    if (keycode == KEY_S)
+        map_info->keys.s = 0;
+    if (keycode == KEY_A)
+        map_info->keys.a = 0;
+    if (keycode == KEY_D)
+        map_info->keys.d = 0;
+    if (keycode == KEY_LEFT)
+        map_info->keys.left = 0;
+    if (keycode == KEY_RIGHT)
+        map_info->keys.right = 0;
+    return (0);
+}
 
-int main()
+int main(int argc, char **argv)
 {
     int fd;
     int ret;
@@ -715,8 +790,6 @@ int main()
     int i = 0;
     char **map;
     t_map map_info;
-    // int sizex;
-    // int sizey;
 
     map_info.win_h = 0;
     map_info.win_w = 0;
@@ -725,6 +798,7 @@ int main()
     map_info.we = NULL;
     map_info.ea = NULL;
     map_info.s = NULL;
+    map_info.screenshot = 0;
 
     fd = open("map.cub", O_RDWR);
     if (fd == -1)
@@ -783,12 +857,6 @@ int main()
     map_info.mlx = mlx_init();
     mlx_do_key_autorepeatoff(map_info.mlx);
 
-    map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "cub3D");
-    map_info.img = mlx_new_image(map_info.mlx, map_info.win_w, map_info.win_h);
-    map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);
-    map_info.posX = (double)map_info.x_player + 0.5;
-    map_info.posY = (double)map_info.y_player + 0.5;
-
     if (load_textures(&map_info) < 0)
     {
         printf("%s\n", "No texture file");
@@ -816,19 +884,26 @@ int main()
         free(map);
         return (-1);
     }
+
+    if (argc == 1)
+        map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "cub3D");
+    else if (argc == 2 && !ft_strncmp(argv[1], "--save", 6))
+        map_info.screenshot = 1;
+
+    map_info.img = mlx_new_image(map_info.mlx, map_info.win_w, map_info.win_h);
+    map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);
+    map_info.posX = (double)map_info.x_player + 0.5;
+    map_info.posY = (double)map_info.y_player + 0.5;
     draw_wall(&map_info);
 
     mlx_loop_hook(map_info.mlx, key_hook, &map_info);
 
-    // mlx_hook(map_info.win, 2, 1L << 0, key_hook, &map_info);
     mlx_hook(map_info.win, 2, 0, handle_pressed_key, &map_info);
 
     mlx_hook(map_info.win, 17, 0, close_all, &map_info); // крестик
 
     mlx_hook(map_info.win, 3, 0, handle_unpressed_key, &map_info);
 
-    // mlx_key_hook(map_info.win, key_hook, &map_info);
     mlx_loop(map_info.mlx);
-    // getc(stdin);
     return (0);
 }
