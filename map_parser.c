@@ -2,94 +2,6 @@
 #include "libft/libft.h"
 #include <mlx.h>
 
-// const int BYTES_PER_PIXEL = 3; /// red, green, & blue
-// const int FILE_HEADER_SIZE = 14;
-// const int INFO_HEADER_SIZE = 40;
-
-// void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName);
-// unsigned char *createBitmapFileHeader(int height, int stride);
-// unsigned char *createBitmapInfoHeader(int height, int width);
-
-// void generateBitmapImage(unsigned char *image, int height, int width, char *imageFileName)
-// {
-//     int widthInBytes = width * BYTES_PER_PIXEL;
-
-//     unsigned char padding[3] = {0, 0, 0};
-//     int paddingSize = (4 - (widthInBytes) % 4) % 4;
-
-//     int stride = (widthInBytes) + paddingSize;
-
-//     FILE *imageFile = fopen(imageFileName, "wb");
-
-//     unsigned char *fileHeader = createBitmapFileHeader(height, stride);
-//     fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
-
-//     unsigned char *infoHeader = createBitmapInfoHeader(height, width);
-//     fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
-
-//     int i;
-//     for (i = 0; i < height; i++)
-//     {
-//         fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
-//         fwrite(padding, 1, paddingSize, imageFile);
-//     }
-
-//     fclose(imageFile);
-// }
-
-// unsigned char *createBitmapFileHeader(int height, int stride)
-// {
-//     int fileSize = FILE_HEADER_SIZE + INFO_HEADER_SIZE + (stride * height);
-
-//     static unsigned char fileHeader[] = {
-//         0, 0,       /// signature
-//         0, 0, 0, 0, /// image file size in bytes
-//         0, 0, 0, 0, /// reserved
-//         0, 0, 0, 0, /// start of pixel array
-//     };
-
-//     fileHeader[0] = (unsigned char)('B');
-//     fileHeader[1] = (unsigned char)('M');
-//     fileHeader[2] = (unsigned char)(fileSize);
-//     fileHeader[3] = (unsigned char)(fileSize >> 8);
-//     fileHeader[4] = (unsigned char)(fileSize >> 16);
-//     fileHeader[5] = (unsigned char)(fileSize >> 24);
-//     fileHeader[10] = (unsigned char)(FILE_HEADER_SIZE + INFO_HEADER_SIZE);
-
-//     return fileHeader;
-// }
-
-// unsigned char *createBitmapInfoHeader(int height, int width)
-// {
-//     static unsigned char infoHeader[] = {
-//         0, 0, 0, 0, /// header size
-//         0, 0, 0, 0, /// image width
-//         0, 0, 0, 0, /// image height
-//         0, 0,       /// number of color planes
-//         0, 0,       /// bits per pixel
-//         0, 0, 0, 0, /// compression
-//         0, 0, 0, 0, /// image size
-//         0, 0, 0, 0, /// horizontal resolution
-//         0, 0, 0, 0, /// vertical resolution
-//         0, 0, 0, 0, /// colors in color table
-//         0, 0, 0, 0, /// important color count
-//     };
-
-//     infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
-//     infoHeader[4] = (unsigned char)(width);
-//     infoHeader[5] = (unsigned char)(width >> 8);
-//     infoHeader[6] = (unsigned char)(width >> 16);
-//     infoHeader[7] = (unsigned char)(width >> 24);
-//     infoHeader[8] = (unsigned char)(height);
-//     infoHeader[9] = (unsigned char)(height >> 8);
-//     infoHeader[10] = (unsigned char)(height >> 16);
-//     infoHeader[11] = (unsigned char)(height >> 24);
-//     infoHeader[12] = (unsigned char)(1);
-//     infoHeader[14] = (unsigned char)(BYTES_PER_PIXEL * 8);
-
-//     return infoHeader;
-// }
-
 void ft_strcpy(char *dst, const char *src)
 {
     while (*src)
@@ -172,6 +84,59 @@ int check_sides(char *map_line, t_map *map_info)
     return (0);
 }
 
+int set_f_c(char *map_line, t_color *c_type)
+{
+    while (*map_line == ' ')
+        map_line++;
+    if (!(*map_line >= '0' && *map_line <= '9'))
+        return (-1);
+    c_type->r = ft_atoi(map_line);
+    while (*map_line >= '0' && *map_line <= '9')
+        map_line++;
+    if (*(map_line++) != ',')
+        return (-1);
+    map_line++;
+    if (!(*map_line >= '0' && *map_line <= '9'))
+        return (-1);
+    c_type->g = ft_atoi(map_line);
+    while (*map_line >= '0' && *map_line <= '9')
+        map_line++;
+    if (*(map_line++) != ',')
+        return (-1);
+    if (!(*map_line >= '0' && *map_line <= '9'))
+        return (-1);
+    c_type->b = ft_atoi(map_line);
+    while (*map_line >= '0' && *map_line <= '9')
+        map_line++;
+    if (*map_line)
+        return (-1);
+    return (0);
+}
+
+int check_f_c(char *map_line, t_map *m)
+{
+    if (*map_line == 'F')
+    {
+        if (m->floor.type)
+            return (-1);
+        m->floor.type = "F";
+        map_line++;
+        if (set_f_c(map_line, &(m->floor)) < 0)
+            return (-1);
+    }
+        
+    if (*map_line == 'C')
+    {
+        if (m->ceil.type)
+            return (-1);
+        m->ceil.type = "C";
+        map_line++;
+        if (set_f_c(map_line, &(m->ceil)) < 0)
+            return (-1);
+    }
+    return (0);
+}
+
 int check_info(char **map, t_map *map_info)
 {
     int i;
@@ -179,7 +144,7 @@ int check_info(char **map, t_map *map_info)
 
     i = 0;
     j = 0;
-    while (i < 6)
+    while (i < 8)
     {
         j = 0;
         if (map[i] == NULL)
@@ -194,11 +159,16 @@ int check_info(char **map, t_map *map_info)
             if ((check_sides(map[i], map_info)) < 0)
                 return (-1);
         }
+        else if ((map[i][j] == 'F' && map[i][j + 1] == ' ') || (map[i][j] == 'C' && map[i][j + 1] == ' '))
+        {
+            if ((check_f_c(map[i], map_info)) < 0)
+                return (-1);
+        }
         else
             return (-1);
         i++;
     }
-    if (!(map_info->no) || !(map_info->so) || !(map_info->we) || !(map_info->ea) || !(map_info->ea))
+    if (!(map_info->no) || !(map_info->so) || !(map_info->we) || !(map_info->ea) || !(map_info->ea) || !(map_info->floor.type) || !(map_info->ceil.type))
         return (-1);
     return (0);
 }
@@ -279,7 +249,7 @@ int check_player(char **map_arr, t_map *map_info)
 
 int flood_fill(char ***map_arr, int x, int y, t_map map_info)
 {
-    if (x < 0 || x > map_info.str_len || y < 6 || y >= map_info.map_len + 6 || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
+    if (x < 0 || x > map_info.str_len || y < 8 || y >= map_info.map_len + 8 || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
         return (-1);
     if ((*map_arr)[y][x] == '1')
         return (1);
@@ -301,7 +271,7 @@ int longest_str(char **map)
     int i;
     int max_len;
 
-    i = 6;
+    i = 8;
     max_len = 0;
     while (map[i])
     {
@@ -325,7 +295,7 @@ int check_map(char ***map, t_map map_info)
     int i;
     int j;
 
-    i = 6;
+    i = 8;
     j = 0;
     while ((*map)[i])
     {
@@ -351,8 +321,8 @@ void draw_f_c(t_map *map_info)
     int c_color = 0xC0E9F5;
     int f_color = 0xF5DEC0;
 
-    i = 0; //height
-    j = 0; //width
+    i = 0;
+    j = 0;
     while (i < (map_info->win_h / 2))
     {
         j = 0;
@@ -632,7 +602,6 @@ void draw_wall(t_map *map_info)
         *(bitmap + 28) = 32;
 
         write(fd, bitmap, 54);
-        printf("%u\n", bitmap[18]);
         int l;
         int s;
         l = (map_info->win_h - 1) * map_info->win_w;
@@ -819,6 +788,8 @@ int main(int argc, char **argv)
     map_info.we = NULL;
     map_info.ea = NULL;
     map_info.s = NULL;
+    map_info.floor.type = NULL;
+    map_info.ceil.type = NULL;
     map_info.screenshot = 0;
 
     fd = open("map.cub", O_RDWR);
@@ -837,9 +808,10 @@ int main(int argc, char **argv)
         free_arr(map);
         return (-1);
     }
+
     //Выделяем новый массив под карту онли
     map_info.str_len = longest_str(map);
-    map_info.map_len = count_map_len(map, 6);
+    map_info.map_len = count_map_len(map, 8);
 
     map_info.map = (char **)malloc((map_info.map_len + 1) * sizeof(char *));
     while (i < map_info.map_len)
@@ -851,7 +823,7 @@ int main(int argc, char **argv)
     i = 0;
     while (i < map_info.map_len)
     {
-        ft_strcpy(map_info.map[i], map[i + 6]);
+        ft_strcpy(map_info.map[i], map[i + 8]);
         i++;
     }
 
@@ -873,7 +845,6 @@ int main(int argc, char **argv)
     }
     map_info.sprites_len = find_sprites(&map_info, &(map_info.sprites)); //потом почистить массив спрайтов
 
-    //текстуры
     free_arr(map);
     map_info.mlx = mlx_init();
     mlx_do_key_autorepeatoff(map_info.mlx);

@@ -26,10 +26,16 @@
 # define KEY_S 1
 # define KEY_A 0
 # define KEY_D 2
-// # define KEY_Q 124
-// # define KEY_E 124
 # define KEY_LEFT 123
 # define KEY_RIGHT 124
+
+typedef struct	s_color
+{
+	char *type;
+	int r;
+	int g;
+	int b;
+}				t_color;
 
 typedef struct s_keys {
     int w;
@@ -105,6 +111,11 @@ typedef struct	s_map
 
 	int sprites_len;
 	t_spr *sprites;
+
+	int screenshot;
+
+	t_color floor;
+	t_color ceil;
 }				t_map;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
