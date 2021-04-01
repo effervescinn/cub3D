@@ -12,17 +12,32 @@
 
 #include "libft.h"
 
-static int	is_space(const char s)
+static int	is_num(const char s)
 {
-	if (s == ' ' || s == '\n' || s == '\t'
-	|| s == '\v' || s == '\f' || s == '\r')
+	if (s >= '0' && s <= '9')
 		return (1);
 	return (0);
 }
 
-static int	is_num(const char s)
+static int count_len(const char *str)
 {
-	if (s >= '0' && s <= '9')
+	int i;
+
+	i = 0;
+	while (is_num(*str))
+	{
+		i++;
+		str++;
+	}
+	if (i >=9)
+		return (-1);
+	return (0);
+}
+
+static int	is_space(const char s)
+{
+	if (s == ' ' || s == '\n' || s == '\t'
+	|| s == '\v' || s == '\f' || s == '\r')
 		return (1);
 	return (0);
 }
@@ -42,6 +57,8 @@ int			ft_atoi(const char *str)
 			sign = -1;
 		str++;
 	}
+	if (count_len(str) < 0)
+		return (-1);
 	while (is_num(*str))
 	{
 		res = res * 10 + *str - '0';

@@ -1,286 +1,21 @@
 #include <stdio.h>
 #include "libft/libft.h"
 #include <mlx.h>
+#include "parser.h"
 
-void ft_strcpy(char *dst, const char *src)
-{
-    while (*src)
-    {
-        *dst = *src;
-        dst++;
-        src++;
-    }
-}
-
-int check_r(char *map_line, t_map *map_info)
-{
-    if (map_info->win_h || map_info->win_w)
-        return (-1);
-    map_line++;
-    while (*map_line == ' ')
-        map_line++;
-    if (!(*map_line >= '0' && *map_line <= '9'))
-        return (-1);
-    map_info->win_w = ft_atoi(map_line);
-    while (*map_line >= '0' && *map_line <= '9')
-        map_line++;
-    while (*map_line == ' ')
-        map_line++;
-    if (!(*map_line >= '0' && *map_line <= '9'))
-        return (-1);
-    map_info->win_h = ft_atoi(map_line);
-    while (*map_line >= '0' && *map_line <= '9')
-        map_line++;
-    if (*map_line)
-        return (-1);
-    return (0);
-}
-
-int check_sides(char *map_line, t_map *map_info)
-{
-    int i;
-
-    i = 0;
-    if (map_line[i] == 'S' && map_line[i + 1] == ' ')
-        i += 1;
-    else
-        i += 2;
-    if (map_line[i++] != ' ' || !map_line[i])
-        return (-1);
-    while (map_line[i] == ' ')
-        i++;
-    if (map_line[i] == '\0')
-        return (-1);
-    if (map_line[0] == 'N')
-    {
-        if (map_info->no)
-            return (-1);
-        map_info->no = ft_strdup(&(map_line[i]));
-    }
-    else if (map_line[0] == 'W')
-    {
-        if (map_info->we)
-            return (-1);
-        map_info->we = ft_strdup(&(map_line[i]));
-    }
-    else if (map_line[0] == 'E')
-    {
-        if (map_info->ea)
-            return (-1);
-        map_info->ea = ft_strdup(&(map_line[i]));
-    }
-    else if (map_line[0] == 'S' && map_line[1] == 'O')
-    {
-        if (map_info->so)
-            return (-1);
-        map_info->so = ft_strdup(&(map_line[i]));
-    }
-    else if (map_line[0] == 'S')
-    {
-        if (map_info->s)
-            return (-1);
-        map_info->s = ft_strdup(&(map_line[i]));
-    }
-    return (0);
-}
-
-int set_f_c(char *map_line, t_color *c_type)
-{
-    while (*map_line == ' ')
-        map_line++;
-    if (!(*map_line >= '0' && *map_line <= '9'))
-        return (-1);
-    c_type->r = ft_atoi(map_line);
-    while (*map_line >= '0' && *map_line <= '9')
-        map_line++;
-    if (*(map_line++) != ',')
-        return (-1);
-    map_line++;
-    if (!(*map_line >= '0' && *map_line <= '9'))
-        return (-1);
-    c_type->g = ft_atoi(map_line);
-    while (*map_line >= '0' && *map_line <= '9')
-        map_line++;
-    if (*(map_line++) != ',')
-        return (-1);
-    if (!(*map_line >= '0' && *map_line <= '9'))
-        return (-1);
-    c_type->b = ft_atoi(map_line);
-    while (*map_line >= '0' && *map_line <= '9')
-        map_line++;
-    if (*map_line)
-        return (-1);
-    return (0);
-}
-
-int check_f_c(char *map_line, t_map *m)
-{
-    if (*map_line == 'F')
-    {
-        if (m->floor.type)
-            return (-1);
-        m->floor.type = "F";
-        map_line++;
-        if (set_f_c(map_line, &(m->floor)) < 0)
-            return (-1);
-    }
-        
-    if (*map_line == 'C')
-    {
-        if (m->ceil.type)
-            return (-1);
-        m->ceil.type = "C";
-        map_line++;
-        if (set_f_c(map_line, &(m->ceil)) < 0)
-            return (-1);
-    }
-    return (0);
-}
-
-int check_info(char **map, t_map *map_info)
-{
-    int i;
-    int j;
-
-    i = 0;
-    j = 0;
-    while (i < 8)
-    {
-        j = 0;
-        if (map[i] == NULL)
-            return (-1);
-        if (map[i][j] == 'R' && map[i][j + 1] == ' ')
-        {
-            if ((check_r(map[i], map_info)) < 0)
-                return (-1);
-        }
-        else if ((map[i][j] == 'N' && map[i][j + 1] == 'O') || (map[i][j] == 'S' && map[i][j + 1] == 'O') || (map[i][j] == 'W' && map[i][j + 1] == 'E') || (map[i][j] == 'E' && map[i][j + 1] == 'A') || (map[i][j] == 'S' && map[i][j + 1] == ' '))
-        {
-            if ((check_sides(map[i], map_info)) < 0)
-                return (-1);
-        }
-        else if ((map[i][j] == 'F' && map[i][j + 1] == ' ') || (map[i][j] == 'C' && map[i][j + 1] == ' '))
-        {
-            if ((check_f_c(map[i], map_info)) < 0)
-                return (-1);
-        }
-        else
-            return (-1);
-        i++;
-    }
-    if (!(map_info->no) || !(map_info->so) || !(map_info->we) || !(map_info->ea) || !(map_info->ea) || !(map_info->floor.type) || !(map_info->ceil.type))
-        return (-1);
-    return (0);
-}
-
-int count_map_len(char **map, int i)
-{
-    int map_len;
-
-    map_len = 0;
-    while (map[i])
-    {
-        map_len++;
-        i++;
-    }
-    return (map_len);
-}
-
-void set_dir(t_map *map_info, char letter)
-{
-    if (letter == 'N')
-    {
-        map_info->dirX = 0;
-        map_info->dirY = -1;
-        map_info->planeX = 0.57;
-        map_info->planeY = 0;
-    }
-    else if (letter == 'S')
-    {
-        map_info->dirX = 0;
-        map_info->dirY = 1;
-        map_info->planeX = -0.57;
-        map_info->planeY = 0;
-    }
-    else if (letter == 'W')
-    {
-        map_info->dirX = -1;
-        map_info->dirY = 0;
-        map_info->planeX = 0;
-        map_info->planeY = -0.57;
-    }
-    else if (letter == 'E')
-    {
-        map_info->dirX = 1;
-        map_info->dirY = 0;
-        map_info->planeX = 0;
-        map_info->planeY = 0.57;
-    }
-}
-
-int check_player(char **map_arr, t_map *map_info)
-{
-    int i;
-    int j;
-    int count;
-
-    i = 0;
-    count = 0;
-    while (map_arr[i])
-    {
-        j = 0;
-        while (map_arr[i][j])
-        {
-            if (map_arr[i][j] == 'N' || map_arr[i][j] == 'E' || map_arr[i][j] == 'W' || map_arr[i][j] == 'S')
-            {
-                map_info->x_player = j;
-                map_info->y_player = i;
-                set_dir(map_info, map_arr[i][j]);
-                count++;
-            }
-            j++;
-        }
-        i++;
-    }
-    if (count != 1)
-        return (-1);
-    return (0);
-}
-
-int flood_fill(char ***map_arr, int x, int y, t_map map_info)
-{
-    if (x < 0 || x > map_info.str_len || y < 8 || y >= map_info.map_len + 8 || !((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2' || (*map_arr)[y][x] == '1'))
-        return (-1);
-    if ((*map_arr)[y][x] == '1')
-        return (1);
-    if ((*map_arr)[y][x] == 'N' || (*map_arr)[y][x] == 'W' || (*map_arr)[y][x] == 'E' || (*map_arr)[y][x] == 'S' || (*map_arr)[y][x] == '0' || (*map_arr)[y][x] == '2')
-        (*map_arr)[y][x] = '1';
-    if (flood_fill(map_arr, x, y + 1, map_info) < 0)
-        return (-1);
-    if (flood_fill(map_arr, x + 1, y, map_info) < 0)
-        return (-1);
-    if (flood_fill(map_arr, x - 1, y, map_info) < 0)
-        return (-1);
-    if (flood_fill(map_arr, x, y - 1, map_info) < 0)
-        return (-1);
-    return (0);
-}
-
-int longest_str(char **map)
-{
-    int i;
-    int max_len;
-
-    i = 8;
-    max_len = 0;
-    while (map[i])
-    {
-        if ((int)ft_strlen(map[i]) > max_len)
-            max_len = ft_strlen(map[i]);
-        i++;
-    }
-    return (max_len);
-}
+#define ERROR "Error"
+#define FD_ERROR "Wrong file"
+#define RES_ERROR "Resolution error"
+#define TEXT_ERROR "Textures error"
+#define F_C_ERROR "Floor or ceiling error" 
+#define ODD_ERROR "Odd line"
+#define MISS_ERROR "Missed information"
+#define RES_SIZE_ERROR "Wrong resolution"
+#define COLOR_ERROR "Wrong colors"
+#define PLAYER_ERROR "Player is not one"
+#define MAP_ERROR "Invalid map"
+#define XPM_WALL_ERROR "Invalid texture format"
+#define XPM_SPRITE_ERROR "Invalid sprite format"
 
 void my_mlx_pixel_put(t_map *data, int x, int y, int color)
 {
@@ -290,93 +25,36 @@ void my_mlx_pixel_put(t_map *data, int x, int y, int color)
     *(unsigned int *)dst = color;
 }
 
-int check_map(char ***map, t_map map_info)
+int make_color(int r, int g, int b)
 {
-    int i;
-    int j;
-
-    i = 8;
-    j = 0;
-    while ((*map)[i])
-    {
-        j = 0;
-        while ((*map)[i][j])
-        {
-            if ((*map)[i][j] == '0' || (*map)[i][j] == '2' || (*map)[i][j] == 'N' || (*map)[i][j] == 'E' || (*map)[i][j] == 'S' || (*map)[i][j] == 'W')
-            {
-                if (flood_fill(map, j, i, map_info) < 0)
-                    return (-1);
-            }
-            j++;
-        }
-        i++;
-    }
-    return (0);
+    return(r << 16 | g << 8 | b);
 }
 
-void draw_f_c(t_map *map_info)
+
+void draw_f_c(t_map *m)
 {
     int i;
     int j;
-    int c_color = 0xC0E9F5;
-    int f_color = 0xF5DEC0;
+    int c_color = make_color(m->ceil.r, m->ceil.g, m->ceil.b);
+    int f_color = make_color(m->floor.r, m->floor.g, m->floor.b);
 
     i = 0;
-    j = 0;
-    while (i < (map_info->win_h / 2))
+    while (i < (m->win_h / 2))
     {
-        j = 0;
-        while (j < map_info->win_w)
-        {
-            my_mlx_pixel_put(map_info, j, i, c_color);
-            j++;
-        }
+        j = -1;
+        while (++j < m->win_w)
+            my_mlx_pixel_put(m, j, i, c_color);
         i++;
     }
-    while (i < (map_info->win_h))
+    while (i < (m->win_h))
     {
-        j = 0;
-        while (j < map_info->win_w)
-        {
-            my_mlx_pixel_put(map_info, j, i, f_color);
-            j++;
-        }
+        j = -1;
+        while (++j < m->win_w)
+            my_mlx_pixel_put(m, j, i, f_color);
         i++;
     }
 }
 
-int load_textures(t_map *map_info)
-{
-    map_info->no_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->no, &map_info->no_text.width, &map_info->no_text.height);
-    if (map_info->no_text.img == NULL)
-        return (-1);
-    map_info->no_text.addr = mlx_get_data_addr(map_info->no_text.img, &map_info->no_text.bits_per_pixel, &map_info->no_text.line_length, &map_info->no_text.endian);
-
-    map_info->so_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->so, &map_info->so_text.width, &map_info->so_text.height);
-    if (map_info->so_text.img == NULL)
-        return (-1);
-    map_info->so_text.addr = mlx_get_data_addr(map_info->so_text.img, &map_info->so_text.bits_per_pixel, &map_info->so_text.line_length, &map_info->so_text.endian);
-
-    map_info->ea_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->ea, &map_info->ea_text.width, &map_info->ea_text.height);
-    if (map_info->ea_text.img == NULL)
-        return (-1);
-    map_info->ea_text.addr = mlx_get_data_addr(map_info->ea_text.img, &map_info->ea_text.bits_per_pixel, &map_info->ea_text.line_length, &map_info->ea_text.endian);
-
-    map_info->we_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->we, &map_info->we_text.width, &map_info->we_text.height);
-    if (map_info->we_text.img == NULL)
-        return (-1);
-    map_info->we_text.addr = mlx_get_data_addr(map_info->we_text.img, &map_info->we_text.bits_per_pixel, &map_info->we_text.line_length, &map_info->we_text.endian);
-    return (0);
-}
-
-int load_sprites(t_map *map_info)
-{
-    map_info->spr.img = mlx_xpm_file_to_image(map_info->mlx, map_info->s, &map_info->spr.width, &map_info->spr.height);
-    if (map_info->spr.img == NULL)
-        return (-1);
-    map_info->spr.addr = mlx_get_data_addr(map_info->spr.img, &map_info->spr.bits_per_pixel, &map_info->spr.line_length, &map_info->spr.endian);
-    return (0);
-}
 
 void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
 {
@@ -408,6 +86,13 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
 int close_all(void *arg)
 {
     exit(0);
+    return (0);
+}
+
+int esc_close(int keycode)
+{
+    if (keycode == 53)
+        exit(0);
     return (0);
 }
 
@@ -680,51 +365,6 @@ int key_hook(t_map *map_info)
     return (0);
 }
 
-int find_sprites(t_map *map_info, t_spr **sprites)
-{
-    int i;
-    int j;
-    int k;
-    int quantity;
-
-    i = 0;
-    j = 0;
-    k = 0;
-    quantity = 0;
-    while (i < map_info->map_len) //считаем количество спрайтов
-    {
-        j = 0;
-        while (j < map_info->str_len)
-        {
-            if (map_info->map[i][j] == '2')
-                quantity++;
-            j++;
-        }
-        i++;
-    }
-
-    *sprites = (t_spr *)malloc(sizeof(t_spr) * quantity);
-    i = 0;
-    j = 0;
-    while (i < map_info->map_len)
-    {
-        j = 0;
-        while (j < map_info->str_len)
-        {
-            if (map_info->map[i][j] == '2')
-            {
-                (*sprites)[k].x = j + 0.5;
-                (*sprites)[k].y = i + 0.5;
-                map_info->map[i][j] = '0';
-                k++;
-            }
-            j++;
-        }
-        i++;
-    }
-    return (quantity);
-}
-
 void free_arr(char **arr)
 {
     int i;
@@ -772,6 +412,46 @@ int handle_unpressed_key(int keycode, t_map *map_info)
     return (0);
 }
 
+void set_struct(t_map *map_info)
+{
+    map_info->win_h = 0;
+    map_info->win_w = 0;
+    map_info->no = NULL;
+    map_info->so = NULL;
+    map_info->we = NULL;
+    map_info->ea = NULL;
+    map_info->s = NULL;
+    map_info->floor.type = NULL;
+    map_info->ceil.type = NULL;
+    map_info->screenshot = 0;
+}
+
+void print_err(int err)
+{
+    if (err == -2)
+        printf("%s\n%s\n", ERROR, RES_ERROR);
+    else if (err == -3)
+        printf("%s\n%s\n", ERROR, TEXT_ERROR);
+    else if (err == -4)
+        printf("%s\n%s\n", ERROR, F_C_ERROR);
+    else if (err == -5)
+        printf("%s\n%s\n", ERROR, ODD_ERROR);
+    else if (err == -6)
+        printf("%s\n%s\n", ERROR, MISS_ERROR);
+    else if (err == -7)
+        printf("%s\n%s\n", ERROR, RES_SIZE_ERROR);
+    else if (err == -8)
+        printf("%s\n%s\n", ERROR, COLOR_ERROR);
+    else if (err == -9)
+        printf("%s\n%s\n", ERROR, PLAYER_ERROR);
+    else if (err == -10)
+        printf("%s\n%s\n", ERROR, MAP_ERROR);
+    else if (err == -11)
+        printf("%s\n%s\n", ERROR, XPM_WALL_ERROR);
+    else if (err == -12)
+        printf("%s\n%s\n", ERROR, XPM_SPRITE_ERROR);
+}
+
 int main(int argc, char **argv)
 {
     int fd;
@@ -780,31 +460,25 @@ int main(int argc, char **argv)
     int i = 0;
     char **map;
     t_map map_info;
+    int err;
 
-    map_info.win_h = 0;
-    map_info.win_w = 0;
-    map_info.no = NULL;
-    map_info.so = NULL;
-    map_info.we = NULL;
-    map_info.ea = NULL;
-    map_info.s = NULL;
-    map_info.floor.type = NULL;
-    map_info.ceil.type = NULL;
-    map_info.screenshot = 0;
-
+    
+    set_struct(&map_info);
     fd = open("map.cub", O_RDWR);
     if (fd == -1)
     {
-        printf("%s\n", "Wrong file");
+        printf(FD_ERROR);
         return (-1);
     }
     while ((ret = read(fd, map_str, BUF_SIZE)))
         map_str[ret] = '\0';
     close(fd);
     map = ft_split(map_str, '\n');
-    if (check_info(map, &map_info) < 0)
+
+
+    if ((err = check_info(map, &map_info)) < 0)
     {
-        printf("%s\n", "Info eror");
+        print_err(err);
         free_arr(map);
         return (-1);
     }
@@ -827,18 +501,17 @@ int main(int argc, char **argv)
         i++;
     }
 
-    if (check_player(map_info.map, &map_info) < 0)
+    if ((err = check_player(map_info.map, &map_info)) < 0)
     {
-        printf("%s\n", "Player error");
+        print_err(err);
         free_arr(map_info.map);
         free_arr(map);
-        getc(stdin);
         return (-1);
     }
 
-    if (check_map(&map, map_info) < 0)
+    if ((err = check_map(&map, map_info)) < 0)
     {
-        printf("%s\n", "Map error");
+        print_err(err);
         free_arr(map_info.map);
         free_arr(map);
         return (-1);
@@ -851,29 +524,29 @@ int main(int argc, char **argv)
 
     if (load_textures(&map_info) < 0)
     {
-        printf("%s\n", "No texture file");
-        int e = 0;
-        while (e < map_info.map_len)
-        {
-            free(map_info.map[e]);
-            e++;
-        }
-        free(map_info.map);
-        free(map);
+        printf("%s\n", "Wrong texture file");
+        // int e = 0;
+        // while (e < map_info.map_len)
+        // {
+        //     free(map_info.map[e]);
+        //     e++;
+        // }
+        // free(map_info.map);
+        // free(map);
         return (-1);
     }
 
     if (load_sprites(&map_info) < 0)
     {
-        printf("%s\n", "No sprites file");
-        int e = 0;
-        while (e < map_info.map_len)
-        {
-            free(map_info.map[e]);
-            e++;
-        }
-        free(map_info.map);
-        free(map);
+        printf("%s\n", "Wrong sprites file");
+        // int e = 0;
+        // while (e < map_info.map_len)
+        // {
+        //     free(map_info.map[e]);
+        //     e++;
+        // }
+        // free(map_info.map);
+        // free(map);
         return (-1);
     }
 
@@ -881,6 +554,9 @@ int main(int argc, char **argv)
         map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "cub3D");
     else if (argc == 2 && !ft_strncmp(argv[1], "--save", 6))
         map_info.screenshot = 1;
+
+
+
 
     map_info.img = mlx_new_image(map_info.mlx, map_info.win_w, map_info.win_h);
     map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);
@@ -893,6 +569,8 @@ int main(int argc, char **argv)
     mlx_hook(map_info.win, 2, 0, handle_pressed_key, &map_info);
 
     mlx_hook(map_info.win, 17, 0, close_all, &map_info); // крестик
+
+    // mlx_hook(map_info.win, 2, 1L<<0, esc_close, &map_info); // esc не работают другие клавиши
 
     mlx_hook(map_info.win, 3, 0, handle_unpressed_key, &map_info);
 

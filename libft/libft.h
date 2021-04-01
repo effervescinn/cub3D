@@ -35,6 +35,7 @@ typedef struct	s_color
 	int r;
 	int g;
 	int b;
+	int color;
 }				t_color;
 
 typedef struct s_keys {
@@ -78,11 +79,13 @@ typedef struct	s_map
     void    *win;
 	int win_h;
 	int win_w;
+	
 	char *no;
 	char *so;
 	char *we;
 	char *ea;
 	char *s;
+
 	int map_len;
 	int str_len;
 	char **map;
