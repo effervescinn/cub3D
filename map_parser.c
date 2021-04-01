@@ -7,7 +7,7 @@
 #define FD_ERROR "Wrong file"
 #define RES_ERROR "Resolution error"
 #define TEXT_ERROR "Textures error"
-#define F_C_ERROR "Floor or ceiling error" 
+#define F_C_ERROR "Floor or ceiling error"
 #define ODD_ERROR "Odd line"
 #define MISS_ERROR "Missed information"
 #define RES_SIZE_ERROR "Wrong resolution"
@@ -16,6 +16,9 @@
 #define MAP_ERROR "Invalid map"
 #define XPM_WALL_ERROR "Invalid texture format"
 #define XPM_SPRITE_ERROR "Invalid sprite format"
+#define WRONG_TEXTURES "Can't load textures"
+#define WRONG_SPRITE "Can't load sprite"
+#define MALLOC_ERROR "Malloc error"
 
 void my_mlx_pixel_put(t_map *data, int x, int y, int color)
 {
@@ -27,9 +30,22 @@ void my_mlx_pixel_put(t_map *data, int x, int y, int color)
 
 int make_color(int r, int g, int b)
 {
-    return(r << 16 | g << 8 | b);
+    return (r << 16 | g << 8 | b);
 }
 
+void free_arr(char **arr)
+{
+    int i;
+
+    i = 0;
+    while (arr[i])
+    {
+        if (arr[i])
+            free(arr[i]);
+        i++;
+    }
+    free(arr);
+}
 
 void draw_f_c(t_map *m)
 {
@@ -55,15 +71,14 @@ void draw_f_c(t_map *m)
     }
 }
 
-
 void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
 {
     int i;
     int j;
     double dist_perm;
+    int order_perm;
 
     i = 0;
-    j = len - 1;
     while (i < len - 1)
     {
         j = len - 1;
@@ -72,10 +87,11 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
             if (spriteDistance[j - 1] < spriteDistance[j])
             {
                 dist_perm = spriteDistance[j - 1];
-                spriteOrder[j - 1] = j;
+                order_perm = spriteOrder[j - 1];
                 spriteDistance[j - 1] = spriteDistance[j];
                 spriteDistance[j] = dist_perm;
-                spriteOrder[j] = j - 1;
+                spriteOrder[j - 1] = spriteOrder[j];
+                spriteOrder[j] = order_perm;
             }
             j--;
         }
@@ -83,16 +99,21 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
     }
 }
 
-int close_all(void *arg)
-{
-    exit(0);
-    return (0);
-}
-
 int esc_close(int keycode)
 {
     if (keycode == 53)
         exit(0);
+    return (0);
+}
+
+int close_all(t_map *map_info)
+{
+    free(map_info->sprites);
+    free_arr(map_info->map);
+    mlx_destroy_image(map_info->mlx, map_info->img);
+    if (map_info->win)
+        mlx_destroy_window(map_info->mlx, map_info->win);
+    exit(0);
     return (0);
 }
 
@@ -210,13 +231,12 @@ void draw_wall(t_map *map_info)
         zBuffer[p] = perpWallDist;
         p++;
     }
-
     for (int r = 0; r < map_info->sprites_len; r++) //считаем расстояние до спрайтов
     {
         spriteOrder[r] = r;
         spriteDistance[r] = ((map_info->posX - map_info->sprites[r].x) * (map_info->posX - map_info->sprites[r].x) + (map_info->posY - map_info->sprites[r].y) * (map_info->posY - map_info->sprites[r].y)); //sqrt not taken, unneeded
     }
-    sort_sprites(spriteOrder, spriteDistance, map_info->sprites_len); // вроде как сортируется в порядке возрастания расстояния
+    sort_sprites(spriteOrder, spriteDistance, map_info->sprites_len);
     for (int i = 0; i < map_info->sprites_len; i++)
     {
         double spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
@@ -365,19 +385,6 @@ int key_hook(t_map *map_info)
     return (0);
 }
 
-void free_arr(char **arr)
-{
-    int i;
-
-    i = 0;
-    while (arr[i])
-    {
-        free(arr[i]);
-        i++;
-    }
-    free(arr);
-}
-
 int handle_pressed_key(int keycode, t_map *map_info)
 {
     if (keycode == KEY_W)
@@ -450,6 +457,12 @@ void print_err(int err)
         printf("%s\n%s\n", ERROR, XPM_WALL_ERROR);
     else if (err == -12)
         printf("%s\n%s\n", ERROR, XPM_SPRITE_ERROR);
+    else if (err == -13)
+        printf("%s\n%s\n", ERROR, WRONG_TEXTURES);
+    else if (err == -14)
+        printf("%s\n%s\n", ERROR, WRONG_SPRITE);
+    else if (err == -100)
+        printf("%s\n%s\n", ERROR, MALLOC_ERROR);
 }
 
 int main(int argc, char **argv)
@@ -462,7 +475,6 @@ int main(int argc, char **argv)
     t_map map_info;
     int err;
 
-    
     set_struct(&map_info);
     fd = open("map.cub", O_RDWR);
     if (fd == -1)
@@ -475,7 +487,6 @@ int main(int argc, char **argv)
     close(fd);
     map = ft_split(map_str, '\n');
 
-
     if ((err = check_info(map, &map_info)) < 0)
     {
         print_err(err);
@@ -483,7 +494,6 @@ int main(int argc, char **argv)
         return (-1);
     }
 
-    //Выделяем новый массив под карту онли
     map_info.str_len = longest_str(map);
     map_info.map_len = count_map_len(map, 8);
 
@@ -516,37 +526,30 @@ int main(int argc, char **argv)
         free_arr(map);
         return (-1);
     }
-    map_info.sprites_len = find_sprites(&map_info, &(map_info.sprites)); //потом почистить массив спрайтов
-
+    if ((map_info.sprites_len = find_sprites(&map_info, &(map_info.sprites))) < 0) //потом почистить массив спрайтов
+    {
+        print_err(map_info.sprites_len);
+        free_arr(map_info.map);
+        free_arr(map);
+        return (-1);
+    }
     free_arr(map);
     map_info.mlx = mlx_init();
     mlx_do_key_autorepeatoff(map_info.mlx);
 
-    if (load_textures(&map_info) < 0)
+    if ((err = load_textures(&map_info)) < 0)
     {
-        printf("%s\n", "Wrong texture file");
-        // int e = 0;
-        // while (e < map_info.map_len)
-        // {
-        //     free(map_info.map[e]);
-        //     e++;
-        // }
-        // free(map_info.map);
-        // free(map);
+        print_err(err);
+        free(map_info.sprites);
+        free_arr(map_info.map);
         return (-1);
     }
 
-    if (load_sprites(&map_info) < 0)
+    if ((err = load_sprites(&map_info)) < 0)
     {
-        printf("%s\n", "Wrong sprites file");
-        // int e = 0;
-        // while (e < map_info.map_len)
-        // {
-        //     free(map_info.map[e]);
-        //     e++;
-        // }
-        // free(map_info.map);
-        // free(map);
+        print_err(err);
+        free(map_info.sprites);
+        free_arr(map_info.map);
         return (-1);
     }
 
@@ -554,9 +557,6 @@ int main(int argc, char **argv)
         map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "cub3D");
     else if (argc == 2 && !ft_strncmp(argv[1], "--save", 6))
         map_info.screenshot = 1;
-
-
-
 
     map_info.img = mlx_new_image(map_info.mlx, map_info.win_w, map_info.win_h);
     map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);

@@ -140,38 +140,51 @@ int check_f_c(char *map_line, t_map *m)
     return (0);
 }
 
+int verify_sides(char **map, int *i)
+{
+    if ((map[*i][0] == 'N' && map[*i][1] == 'O') ||
+        (map[*i][0] == 'S' && map[*i][1] == 'O') ||
+        (map[*i][0] == 'W' && map[*i][1] == 'E') ||
+        (map[*i][0] == 'E' && map[*i][1] == 'A') ||
+        (map[*i][0] == 'S' && map[*i][1] == ' '))
+        return (1);
+    else
+        return (0);
+}
+
+int verify_f_c(char **map, int *i)
+{
+    if ((map[*i][0] == 'F' && map[*i][1] == ' ') ||
+        (map[*i][0] == 'C' && map[*i][1] == ' '))
+        return (-1);
+    else
+        return (0);
+}
+
 int check_let(char **map, t_map *map_info)
 {
     int i;
-    int j;
 
-    i = 0;
-    j = 0;
-    while (i < 8 && map[i])
+    i = -1;
+    while (++i < 8 && map[i])
     {
-        if (map[i][j] == 'R' && map[i][j + 1] == ' ')
+        if (map[i][0] == 'R' && map[i][1] == ' ')
         {
             if (check_r(map[i], map_info) < 0)
                 return (-2);
         }
-        else if ((map[i][j] == 'N' && map[i][j + 1] == 'O') ||
-                 (map[i][j] == 'S' && map[i][j + 1] == 'O') ||
-                 (map[i][j] == 'W' && map[i][j + 1] == 'E') ||
-                 (map[i][j] == 'E' && map[i][j + 1] == 'A') ||
-                 (map[i][j] == 'S' && map[i][j + 1] == ' '))
+        else if (verify_sides(map, &i))
         {
             if (check_sides(map[i], map_info) < 0)
                 return (-3);
         }
-        else if ((map[i][j] == 'F' && map[i][j + 1] == ' ') ||
-                 (map[i][j] == 'C' && map[i][j + 1] == ' '))
+        else if (verify_f_c(map, &i))
         {
             if (check_f_c(map[i], map_info) < 0)
                 return (-4);
         }
         else
             return (-5);
-        i++;
     }
     return (0);
 }
@@ -179,18 +192,20 @@ int check_let(char **map, t_map *map_info)
 int check_n_s_xpm(t_map *info)
 {
     int i;
-    
+
     i = ft_strlen(info->no);
     if (i < 5)
         return (-11);
     i--;
-    if (info->no[i] != 'm' || info->no[i - 1] != 'p' || info->no[i - 2] != 'x' || info->no[i - 3] != '.')
+    if (info->no[i] != 'm' || info->no[i - 1] != 'p' ||
+        info->no[i - 2] != 'x' || info->no[i - 3] != '.')
         return (-11);
     i = ft_strlen(info->so);
     if (i < 5)
         return (-11);
     i--;
-    if (info->so[i] != 'm' || info->so[i - 1] != 'p' || info->so[i - 2] != 'x' || info->so[i - 3] != '.')
+    if (info->so[i] != 'm' || info->so[i - 1] != 'p' ||
+        info->so[i - 2] != 'x' || info->so[i - 3] != '.')
         return (-11);
     return (0);
 }
@@ -198,18 +213,20 @@ int check_n_s_xpm(t_map *info)
 int check_w_e_xpm(t_map *info)
 {
     int i;
-    
+
     i = ft_strlen(info->we);
     if (i < 5)
         return (-11);
     i--;
-    if (info->we[i] != 'm' || info->we[i - 1] != 'p' || info->we[i - 2] != 'x' || info->we[i - 3] != '.')
+    if (info->we[i] != 'm' || info->we[i - 1] != 'p' ||
+        info->we[i - 2] != 'x' || info->we[i - 3] != '.')
         return (-11);
     i = ft_strlen(info->ea);
     if (i < 5)
         return (-11);
     i--;
-    if (info->ea[i] != 'm' || info->ea[i - 1] != 'p' || info->ea[i - 2] != 'x' || info->ea[i - 3] != '.')
+    if (info->ea[i] != 'm' || info->ea[i - 1] != 'p' ||
+        info->ea[i - 2] != 'x' || info->ea[i - 3] != '.')
         return (-11);
     return (0);
 }
@@ -217,12 +234,13 @@ int check_w_e_xpm(t_map *info)
 int check_spr_xpm(t_map *info)
 {
     int i;
-    
+
     i = ft_strlen(info->s);
     if (i < 5)
         return (-12);
     i--;
-    if (info->s[i] != 'm' || info->s[i - 1] != 'p' || info->s[i - 2] != 'x' || info->s[i - 3] != '.')
+    if (info->s[i] != 'm' || info->s[i - 1] != 'p' ||
+        info->s[i - 2] != 'x' || info->s[i - 3] != '.')
         return (-12);
     return (0);
 }
@@ -239,8 +257,8 @@ int check_info(char **map, t_map *info)
         return (ret);
     if ((ret = check_spr_xpm(info)) < 0)
         return (ret);
-    if (!(info->no) || !(info->so) || !(info->we) || !(info->ea) || !(info->ea) 
-    || !(info->floor.type) || !(info->ceil.type))
+    if (!(info->no) || !(info->so) || !(info->we) || !(info->ea) || 
+    !(info->ea) || !(info->floor.type) || !(info->ceil.type))
         return (-6);
     if (info->win_h <= 0 || info->win_w <= 0)
         return (-7);
@@ -267,7 +285,7 @@ int count_map_len(char **map, int i)
     return (map_len);
 }
 
-void set_N(t_map *map_info)
+void set_n(t_map *map_info)
 {
     map_info->dirX = 0;
     map_info->dirY = -1;
@@ -275,7 +293,7 @@ void set_N(t_map *map_info)
     map_info->planeY = 0;
 }
 
-void set_S(t_map *map_info)
+void set_s(t_map *map_info)
 {
     map_info->dirX = 0;
     map_info->dirY = 1;
@@ -283,7 +301,7 @@ void set_S(t_map *map_info)
     map_info->planeY = 0;
 }
 
-void set_W(t_map *map_info)
+void set_w(t_map *map_info)
 {
     map_info->dirX = -1;
     map_info->dirY = 0;
@@ -291,7 +309,7 @@ void set_W(t_map *map_info)
     map_info->planeY = -0.57;
 }
 
-void set_E(t_map *map_info)
+void set_e(t_map *map_info)
 {
     map_info->dirX = 1;
     map_info->dirY = 0;
@@ -302,13 +320,13 @@ void set_E(t_map *map_info)
 void set_dir(t_map *map_info, char letter)
 {
     if (letter == 'N')
-        set_N(map_info);
+        set_n(map_info);
     else if (letter == 'S')
-        set_S(map_info);
+        set_s(map_info);
     else if (letter == 'W')
-        set_W(map_info);
+        set_w(map_info);
     else if (letter == 'E')
-        set_E(map_info);
+        set_e(map_info);
 }
 
 int check_player(char **map_arr, t_map *map_info)
@@ -317,14 +335,15 @@ int check_player(char **map_arr, t_map *map_info)
     int j;
     int count;
 
-    i = 0;
+    i = -1;
     count = 0;
-    while (map_arr[i])
+    while (map_arr[++i])
     {
         j = 0;
         while (map_arr[i][j])
         {
-            if (map_arr[i][j] == 'N' || map_arr[i][j] == 'E' || map_arr[i][j] == 'W' || map_arr[i][j] == 'S')
+            if (map_arr[i][j] == 'N' || map_arr[i][j] == 'E' ||
+                map_arr[i][j] == 'W' || map_arr[i][j] == 'S')
             {
                 map_info->x_player = j;
                 map_info->y_player = i;
@@ -333,7 +352,6 @@ int check_player(char **map_arr, t_map *map_info)
             }
             j++;
         }
-        i++;
     }
     if (count != 1)
         return (-9);
@@ -408,36 +426,62 @@ int check_map(char ***map, t_map map_info)
     return (0);
 }
 
-int load_textures(t_map *map_info)
+int load_textures(t_map *m)
 {
-    map_info->no_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->no, &map_info->no_text.width, &map_info->no_text.height);
-    if (map_info->no_text.img == NULL)
-        return (-1);
-    map_info->no_text.addr = mlx_get_data_addr(map_info->no_text.img, &map_info->no_text.bits_per_pixel, &map_info->no_text.line_length, &map_info->no_text.endian);
-
-    map_info->so_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->so, &map_info->so_text.width, &map_info->so_text.height);
-    if (map_info->so_text.img == NULL)
-        return (-1);
-    map_info->so_text.addr = mlx_get_data_addr(map_info->so_text.img, &map_info->so_text.bits_per_pixel, &map_info->so_text.line_length, &map_info->so_text.endian);
-
-    map_info->ea_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->ea, &map_info->ea_text.width, &map_info->ea_text.height);
-    if (map_info->ea_text.img == NULL)
-        return (-1);
-    map_info->ea_text.addr = mlx_get_data_addr(map_info->ea_text.img, &map_info->ea_text.bits_per_pixel, &map_info->ea_text.line_length, &map_info->ea_text.endian);
-
-    map_info->we_text.img = mlx_xpm_file_to_image(map_info->mlx, map_info->we, &map_info->we_text.width, &map_info->we_text.height);
-    if (map_info->we_text.img == NULL)
-        return (-1);
-    map_info->we_text.addr = mlx_get_data_addr(map_info->we_text.img, &map_info->we_text.bits_per_pixel, &map_info->we_text.line_length, &map_info->we_text.endian);
+    m->no_text.img = mlx_xpm_file_to_image(m->mlx, m->no, &m->no_text.width, &m->no_text.height);
+    if (m->no_text.img == NULL)
+        return (-13);
+    m->no_text.addr = mlx_get_data_addr(m->no_text.img, &m->no_text.bits_per_pixel, &m->no_text.line_length, &m->no_text.endian);
+    m->so_text.img = mlx_xpm_file_to_image(m->mlx, m->so, &m->so_text.width, &m->so_text.height);
+    if (m->so_text.img == NULL)
+        return (-13);
+    m->so_text.addr = mlx_get_data_addr(m->so_text.img, &m->so_text.bits_per_pixel, &m->so_text.line_length, &m->so_text.endian);
+    m->ea_text.img = mlx_xpm_file_to_image(m->mlx, m->ea, &m->ea_text.width, &m->ea_text.height);
+    if (m->ea_text.img == NULL)
+        return (-13);
+    m->ea_text.addr = mlx_get_data_addr(m->ea_text.img, &m->ea_text.bits_per_pixel, &m->ea_text.line_length, &m->ea_text.endian);
+    m->we_text.img = mlx_xpm_file_to_image(m->mlx, m->we, &m->we_text.width, &m->we_text.height);
+    if (m->we_text.img == NULL)
+        return (-13);
+    m->we_text.addr = mlx_get_data_addr(m->we_text.img, &m->we_text.bits_per_pixel, &m->we_text.line_length, &m->we_text.endian);
     return (0);
 }
 
-int load_sprites(t_map *map_info)
+int load_sprites(t_map *m)
 {
-    map_info->spr.img = mlx_xpm_file_to_image(map_info->mlx, map_info->s, &map_info->spr.width, &map_info->spr.height);
-    if (map_info->spr.img == NULL)
+    m->spr.img = mlx_xpm_file_to_image(m->mlx, m->s, &m->spr.width, &m->spr.height);
+    if (m->spr.img == NULL)
+        return (-14);
+    m->spr.addr = mlx_get_data_addr(m->spr.img, &m->spr.bits_per_pixel, &m->spr.line_length, &m->spr.endian);
+    return (0);
+}
+
+int spr_arr(t_map *map_info, t_spr **sprites, int q)
+{
+    int i;
+    int j;
+    int k;
+
+    i = 0;
+    k = 0;
+    if (!(*sprites = (t_spr *)malloc(sizeof(t_spr) * q)))
         return (-1);
-    map_info->spr.addr = mlx_get_data_addr(map_info->spr.img, &map_info->spr.bits_per_pixel, &map_info->spr.line_length, &map_info->spr.endian);
+    while (i < map_info->map_len)
+    {
+        j = 0;
+        while (j < map_info->str_len)
+        {
+            if (map_info->map[i][j] == '2')
+            {
+                (*sprites)[k].x = j + 0.5;
+                (*sprites)[k].y = i + 0.5;
+                map_info->map[i][j] = '0';
+                k++;
+            }
+            j++;
+        }
+        i++;
+    }
     return (0);
 }
 
@@ -463,25 +507,7 @@ int find_sprites(t_map *map_info, t_spr **sprites)
         }
         i++;
     }
-
-    *sprites = (t_spr *)malloc(sizeof(t_spr) * quantity);
-    i = 0;
-    j = 0;
-    while (i < map_info->map_len)
-    {
-        j = 0;
-        while (j < map_info->str_len)
-        {
-            if (map_info->map[i][j] == '2')
-            {
-                (*sprites)[k].x = j + 0.5;
-                (*sprites)[k].y = i + 0.5;
-                map_info->map[i][j] = '0';
-                k++;
-            }
-            j++;
-        }
-        i++;
-    }
+    if (spr_arr(map_info, sprites, quantity) < 0)
+        return (-100);
     return (quantity);
 }
