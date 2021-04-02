@@ -475,7 +475,7 @@ int spr_arr(t_map *map_info, t_spr **sprites, int q)
             {
                 (*sprites)[k].x = j + 0.5;
                 (*sprites)[k].y = i + 0.5;
-                map_info->map[i][j] = '0';
+                // map_info->map[i][j] = '0';
                 k++;
             }
             j++;
