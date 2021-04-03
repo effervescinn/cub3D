@@ -60,9 +60,9 @@ typedef struct  s_img
 {
 	void *img;
     char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
+    int bpp;
+    int ll;
+    int end;
 	int width;
 	int height;
 }               t_img;
@@ -96,9 +96,9 @@ typedef struct	s_map
 
 	void *img;
     char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
+    int bpp;
+    int ll;
+    int end;
 
 	double posX;
 	double posY;
@@ -114,7 +114,7 @@ typedef struct	s_map
 	t_img ea_text;
 	t_img spr;
 
-	int sprites_len;
+	int spr_l;
 	t_spr *sprites;
 
 	int screenshot;

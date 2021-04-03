@@ -431,19 +431,19 @@ int load_textures(t_map *m)
     m->no_text.img = mlx_xpm_file_to_image(m->mlx, m->no, &m->no_text.width, &m->no_text.height);
     if (m->no_text.img == NULL)
         return (-13);
-    m->no_text.addr = mlx_get_data_addr(m->no_text.img, &m->no_text.bits_per_pixel, &m->no_text.line_length, &m->no_text.endian);
+    m->no_text.addr = mlx_get_data_addr(m->no_text.img, &m->no_text.bpp, &m->no_text.ll, &m->no_text.end);
     m->so_text.img = mlx_xpm_file_to_image(m->mlx, m->so, &m->so_text.width, &m->so_text.height);
     if (m->so_text.img == NULL)
         return (-13);
-    m->so_text.addr = mlx_get_data_addr(m->so_text.img, &m->so_text.bits_per_pixel, &m->so_text.line_length, &m->so_text.endian);
+    m->so_text.addr = mlx_get_data_addr(m->so_text.img, &m->so_text.bpp, &m->so_text.ll, &m->so_text.end);
     m->ea_text.img = mlx_xpm_file_to_image(m->mlx, m->ea, &m->ea_text.width, &m->ea_text.height);
     if (m->ea_text.img == NULL)
         return (-13);
-    m->ea_text.addr = mlx_get_data_addr(m->ea_text.img, &m->ea_text.bits_per_pixel, &m->ea_text.line_length, &m->ea_text.endian);
+    m->ea_text.addr = mlx_get_data_addr(m->ea_text.img, &m->ea_text.bpp, &m->ea_text.ll, &m->ea_text.end);
     m->we_text.img = mlx_xpm_file_to_image(m->mlx, m->we, &m->we_text.width, &m->we_text.height);
     if (m->we_text.img == NULL)
         return (-13);
-    m->we_text.addr = mlx_get_data_addr(m->we_text.img, &m->we_text.bits_per_pixel, &m->we_text.line_length, &m->we_text.endian);
+    m->we_text.addr = mlx_get_data_addr(m->we_text.img, &m->we_text.bpp, &m->we_text.ll, &m->we_text.end);
     return (0);
 }
 
@@ -452,7 +452,7 @@ int load_sprites(t_map *m)
     m->spr.img = mlx_xpm_file_to_image(m->mlx, m->s, &m->spr.width, &m->spr.height);
     if (m->spr.img == NULL)
         return (-14);
-    m->spr.addr = mlx_get_data_addr(m->spr.img, &m->spr.bits_per_pixel, &m->spr.line_length, &m->spr.endian);
+    m->spr.addr = mlx_get_data_addr(m->spr.img, &m->spr.bpp, &m->spr.ll, &m->spr.end);
     return (0);
 }
 
@@ -475,7 +475,6 @@ int spr_arr(t_map *map_info, t_spr **sprites, int q)
             {
                 (*sprites)[k].x = j + 0.5;
                 (*sprites)[k].y = i + 0.5;
-                // map_info->map[i][j] = '0';
                 k++;
             }
             j++;
@@ -509,5 +508,6 @@ int find_sprites(t_map *map_info, t_spr **sprites)
     }
     if (spr_arr(map_info, sprites, quantity) < 0)
         return (-100);
-    return (quantity);
+    map_info->spr_l = quantity;
+    return (0);
 }
