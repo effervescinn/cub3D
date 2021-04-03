@@ -129,7 +129,7 @@ void draw_wall(t_map *map_info)
 
     while (p < map_info->win_w)
     {
-        double cameraX = 2 * p / (double)map_info->win_w - 1; //x-coordinate in camera space
+        double cameraX = 2 * p / (double)map_info->win_w - 1;
         double rayDirX = map_info->dirX + map_info->planeX * cameraX;
         double rayDirY = map_info->dirY + map_info->planeY * cameraX;
         int mapX = (int)(map_info->posX);
@@ -145,8 +145,8 @@ void draw_wall(t_map *map_info)
         int stepX;
         int stepY;
 
-        int hit = 0; //was there a wall hit?
-        int side;    //was a NS or a EW wall hit?
+        int hit = 0;
+        int side;
         if (rayDirX < 0)
         {
             stepX = -1;
@@ -198,7 +198,7 @@ void draw_wall(t_map *map_info)
         if (drawEnd >= map_info->win_h)
             drawEnd = map_info->win_h - 1;
 
-        double wallX; //where exactly the wall was hit
+        double wallX;
         if (side == 0)
             wallX = map_info->posY + perpWallDist * rayDirY;
         else
@@ -339,24 +339,30 @@ int key_hook(t_map *map_info)
 {
     double rotSpeed;
     double moveSpeed;
+    double oldPlaneX;
+    double oldDirX;
 
     rotSpeed = 0.03;
     moveSpeed = 0.08;
+    if (map_info->keys.esc == 1)
+    {
+        close_all(map_info);
+    }
     if (map_info->keys.left == 1)
     {
-        double oldDirX = map_info->dirX;
+        oldDirX = map_info->dirX;
         map_info->dirX = map_info->dirX * cos(-rotSpeed) - map_info->dirY * sin(-rotSpeed);
         map_info->dirY = (oldDirX * sin(-rotSpeed) + map_info->dirY * cos(-rotSpeed));
-        double oldPlaneX = map_info->planeX;
+        oldPlaneX = map_info->planeX;
         map_info->planeX = (map_info->planeX * cos(-rotSpeed) - map_info->planeY * sin(-rotSpeed));
         map_info->planeY = (oldPlaneX * sin(-rotSpeed) + map_info->planeY * cos(-rotSpeed));
     }
     if (map_info->keys.right == 1)
     {
-        double oldDirX = map_info->dirX;
+        oldDirX = map_info->dirX;
         map_info->dirX = map_info->dirX * cos(rotSpeed) - map_info->dirY * sin(rotSpeed);
         map_info->dirY = (oldDirX * sin(rotSpeed) + map_info->dirY * cos(rotSpeed));
-        double oldPlaneX = map_info->planeX;
+        oldPlaneX = map_info->planeX;
         map_info->planeX = (map_info->planeX * cos(rotSpeed) - map_info->planeY * sin(rotSpeed));
         map_info->planeY = (oldPlaneX * sin(rotSpeed) + map_info->planeY * cos(rotSpeed));
     }
@@ -406,6 +412,8 @@ int handle_pressed_key(int keycode, t_map *map_info)
         map_info->keys.left = 1;
     if (keycode == KEY_RIGHT)
         map_info->keys.right = 1;
+    if (keycode == ESC)
+        map_info->keys.esc = 1;
     return (0);
 }
 
@@ -502,41 +510,72 @@ int write_info(char ***map, t_map *map_info)
     return (0);
 }
 
+void    big_res(t_map *map_info)
+{
+    int sizex;
+    int sizey;
+
+    mlx_get_screen_size(&sizex, &sizey);
+    if (map_info->win_h > sizey)
+        map_info->win_h = sizey;
+    if (map_info->win_w > (int)((double)sizey * 1.778))
+        map_info->win_w = (int)((double)sizey * 1.778);
+}
+
+void calloc_clean(t_map *map_info, char ***map)
+{
+    int i;
+
+    i = 0;
+    while (map_info->map[i])
+    {
+        free(map_info->map[i]);
+        i++;
+    }
+    free_arr(*map);
+}
+
+int copy_map(t_map *map_info, char ***map)
+{
+    int i;
+
+    i = -1;
+    map_info->str_len = longest_str(*map);
+    map_info->map_len = count_map_len(*map, 8);
+    if (!(map_info->map = (char **)malloc((map_info->map_len + 1) * sizeof(char *))))
+    {
+        print_err(-100);
+        free_arr(map_info->map);
+        free_arr(*map);
+        return (-1);
+    }
+    while (++i < map_info->map_len)
+    {
+        if (!(map_info->map[i] = ft_calloc(map_info->str_len + 1, 1)))
+        {
+            calloc_clean(map_info, map);
+            return (-1);
+        }
+    }
+    map_info->map[i] = NULL;
+    i = -1;
+    while (++i < map_info->map_len)
+        ft_strcpy(map_info->map[i], (*map)[i + 8]);
+    return (0);
+}
+
 int main(int argc, char **argv)
 {
-    int i = 0;
+    // int i = 0;
     char **map;
     t_map map_info;
     int err;
 
     set_struct(&map_info);
-
     if ((write_info(&map, &map_info) < 0))
         return (-1);
-
-    map_info.str_len = longest_str(map);
-    map_info.map_len = count_map_len(map, 8);
-
-    if (!(map_info.map = (char **)malloc((map_info.map_len + 1) * sizeof(char *))))
-    {
-        print_err(-100);
-        free_arr(map_info.map);
-        free_arr(map);
+    if (copy_map(&map_info, &map) < 0)
         return (-1);
-    }
-    while (i < map_info.map_len)
-    {
-        map_info.map[i] = ft_calloc(map_info.str_len + 1, 1);
-        i++;
-    }
-    map_info.map[i] = NULL;
-    i = 0;
-    while (i < map_info.map_len)
-    {
-        ft_strcpy(map_info.map[i], map[i + 8]);
-        i++;
-    }
-
     if ((err = check_player(map_info.map, &map_info)) < 0)
     {
         print_err(err);
@@ -579,6 +618,8 @@ int main(int argc, char **argv)
         return (-1);
     }
 
+    big_res(&map_info);
+
     if (argc == 1)
         map_info.win = mlx_new_window(map_info.mlx, map_info.win_w, map_info.win_h, "cub3D");
     else if (argc == 2 && !ft_strncmp(argv[1], "--save", 6))
@@ -588,18 +629,16 @@ int main(int argc, char **argv)
     map_info.addr = mlx_get_data_addr(map_info.img, &map_info.bits_per_pixel, &map_info.line_length, &map_info.endian);
     map_info.posX = (double)map_info.x_player + 0.5;
     map_info.posY = (double)map_info.y_player + 0.5;
+
+    
+    
+
+
     draw_wall(&map_info);
-
     mlx_loop_hook(map_info.mlx, key_hook, &map_info);
-
     mlx_hook(map_info.win, 2, 0, handle_pressed_key, &map_info);
-
     mlx_hook(map_info.win, 17, 0, close_all, &map_info); // крестик
-
-    // mlx_hook(map_info.win, 2, 1L<<0, esc_close, &map_info); // esc не работают другие клавиши
-
     mlx_hook(map_info.win, 3, 0, handle_unpressed_key, &map_info);
-
     mlx_loop(map_info.mlx);
     return (0);
 }

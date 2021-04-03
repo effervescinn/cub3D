@@ -46,6 +46,8 @@ typedef struct s_keys {
 
 	int left;
 	int right;
+
+	int esc;
 }				t_keys;
 
 typedef struct	s_spr
