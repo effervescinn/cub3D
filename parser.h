@@ -1,7 +1,9 @@
 #ifndef PARSER_H
 # define PARSER_H
 # include "libft/libft.h"
-# include <mlx.h>
+# include "raycast.h"
+# include "main.h"
+
 
 void ft_strcpy(char *dst, const char *src);
 int check_r(char *map_line, t_map *map_info);

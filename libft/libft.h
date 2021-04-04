@@ -19,6 +19,7 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <math.h>
+# include <mlx.h>
 # define BUF_SIZE 1024
 
 # define ESC 53
@@ -28,6 +29,51 @@
 # define KEY_D 2
 # define KEY_LEFT 123
 # define KEY_RIGHT 124
+
+typedef struct	s_d_spr
+{
+	double spriteX;
+    double spriteY;
+    double invDet;
+    double transformX;
+    double transformY;
+    int spriteScreenX;
+    int spriteHeight;
+    int drawStartY;
+    int drawEndY;
+    int spriteWidth;
+    int drawStartX;
+    int drawEndX;
+    int texX;
+    int texY;
+}				t_d_spr;
+
+typedef struct	s_walls
+{
+	double cameraX;
+    double rayDirX;
+    double rayDirY;
+    int mapX;
+    int mapY;
+    double sideDistX;
+    double sideDistY;
+    double deltaDistX;
+    double deltaDistY;
+    double perpWallDist;
+    int stepX;
+    int stepY;
+    int side;
+    int hit;
+    int lineHeight;
+    int drawStart;
+    int drawEnd;
+    double wallX;
+    int texX;
+    double step;
+    double texPos;
+    int texY;
+}				t_walls;
+
 
 typedef struct	s_color
 {
@@ -121,6 +167,9 @@ typedef struct	s_map
 
 	t_color floor;
 	t_color ceil;
+
+	t_walls walls;
+	t_d_spr	d_sprs;
 }				t_map;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),

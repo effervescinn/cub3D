@@ -2,6 +2,8 @@
 #include "libft/libft.h"
 #include <mlx.h>
 #include "parser.h"
+#include "raycast.h"
+#include "main.h"
 
 #define ERROR "Error"
 #define FD_ERROR "Wrong file"
@@ -52,10 +54,12 @@ void draw_f_c(t_map *m)
 {
     int i;
     int j;
-    int c_color = make_color(m->ceil.r, m->ceil.g, m->ceil.b);
-    int f_color = make_color(m->floor.r, m->floor.g, m->floor.b);
+    int c_color;
+    int f_color;
 
     i = 0;
+    c_color = make_color(m->ceil.r, m->ceil.g, m->ceil.b);
+    f_color = make_color(m->floor.r, m->floor.g, m->floor.b);
     while (i < (m->win_h / 2))
     {
         j = -1;
@@ -118,223 +122,6 @@ int close_all(t_map *map_info)
     return (0);
 }
 
-void draw_wall(t_map *map_info)
-{
-    unsigned int color;
-    int p = 0;
-    double zBuffer[map_info->win_w];
-    double spriteDistance[map_info->spr_l];
-    int spriteOrder[map_info->spr_l];
-
-    draw_f_c(map_info);
-
-    while (p < map_info->win_w)
-    {
-        double cameraX = 2 * p / (double)map_info->win_w - 1;
-        double rayDirX = map_info->dirX + map_info->planeX * cameraX;
-        double rayDirY = map_info->dirY + map_info->planeY * cameraX;
-        int mapX = (int)(map_info->posX);
-        int mapY = (int)(map_info->posY);
-
-        double sideDistX;
-        double sideDistY;
-
-        double deltaDistX = fabs(1 / rayDirX);
-        double deltaDistY = fabs(1 / rayDirY);
-        double perpWallDist;
-
-        int stepX;
-        int stepY;
-
-        int hit = 0;
-        int side;
-        if (rayDirX < 0)
-        {
-            stepX = -1;
-            sideDistX = (map_info->posX - mapX) * deltaDistX;
-        }
-        else
-        {
-            stepX = 1;
-            sideDistX = (mapX + 1.0 - map_info->posX) * deltaDistX;
-        }
-        if (rayDirY < 0)
-        {
-            stepY = -1;
-            sideDistY = (map_info->posY - mapY) * deltaDistY;
-        }
-        else
-        {
-            stepY = 1;
-            sideDistY = (mapY + 1.0 - map_info->posY) * deltaDistY;
-        }
-        while (hit == 0)
-        {
-            if (sideDistX < sideDistY)
-            {
-                sideDistX += deltaDistX;
-                mapX += stepX;
-                side = 0;
-            }
-            else
-            {
-                sideDistY += deltaDistY;
-                mapY += stepY;
-                side = 1;
-            }
-            if (map_info->map[mapY][mapX] != '0' && map_info->map[mapY][mapX] != 'N' && map_info->map[mapY][mapX] != 'W' && map_info->map[mapY][mapX] != 'E' && map_info->map[mapY][mapX] != 'S' && map_info->map[mapY][mapX] != '2')
-                hit = 1;
-        }
-        if (side == 0)
-            perpWallDist = (mapX - map_info->posX + (1 - stepX) / 2) / rayDirX;
-        else
-            perpWallDist = (mapY - map_info->posY + (1 - stepY) / 2) / rayDirY;
-
-        int lineHeight = (int)(map_info->win_h / perpWallDist);
-
-        int drawStart = -lineHeight / 2 + map_info->win_h / 2;
-        if (drawStart < 0)
-            drawStart = 0;
-        int drawEnd = lineHeight / 2 + map_info->win_h / 2;
-        if (drawEnd >= map_info->win_h)
-            drawEnd = map_info->win_h - 1;
-
-        double wallX;
-        if (side == 0)
-            wallX = map_info->posY + perpWallDist * rayDirY;
-        else
-            wallX = map_info->posX + perpWallDist * rayDirX;
-        wallX -= floor((wallX));
-
-        int texX = (int)(wallX * (double)(map_info->no_text.width));
-        if (side == 0 && rayDirX <= 0)
-            texX = map_info->ea_text.width - 1 - texX;
-        if (side == 1 && rayDirY >= 0)
-            texX = map_info->so_text.width - 1 - texX;
-
-        double step = 1.0 * map_info->no_text.height / lineHeight;
-        double texPos = (drawStart - map_info->win_h / 2 + lineHeight / 2) * step;
-
-        for (int y = drawStart; y < drawEnd; y++)
-        {
-            int texY = (int)texPos & (map_info->we_text.height - 1);
-            texPos += step;
-            if (side == 0 && rayDirX >= 0)
-                color = ((unsigned int *)(map_info->we_text.addr))[map_info->we_text.width * texY + texX];
-            else if (side == 0 && rayDirX <= 0)
-                color = ((unsigned int *)(map_info->ea_text.addr))[map_info->ea_text.width * texY + texX];
-            else if (side == 1 && rayDirY <= 0)
-                color = ((unsigned int *)(map_info->no_text.addr))[map_info->no_text.width * texY + texX];
-            else if (side == 1 && rayDirY >= 0)
-                color = ((unsigned int *)(map_info->so_text.addr))[map_info->so_text.width * texY + texX];
-            my_mlx_pixel_put(map_info, p, y, color);
-        }
-        zBuffer[p] = perpWallDist;
-        p++;
-    }
-
-    for (int r = 0; r < map_info->spr_l; r++) //считаем расстояние до спрайтов
-    {
-        spriteOrder[r] = r;
-        spriteDistance[r] = ((map_info->posX - map_info->sprites[r].x) * (map_info->posX - map_info->sprites[r].x) + (map_info->posY - map_info->sprites[r].y) * (map_info->posY - map_info->sprites[r].y)); //sqrt not taken, unneeded
-    }
-    sort_sprites(spriteOrder, spriteDistance, map_info->spr_l);
-    for (int i = 0; i < map_info->spr_l; i++)
-    {
-        if (!(((int)map_info->posX == (int)map_info->sprites[spriteOrder[i]].x) && ((int)map_info->posY == (int)map_info->sprites[spriteOrder[i]].y)))
-        {
-            double spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
-            double spriteY = map_info->sprites[spriteOrder[i]].y - map_info->posY;
-            double invDet = 1.0 / (map_info->planeX * map_info->dirY - map_info->dirX * map_info->planeY); //required for correct matrix multiplication
-
-            double transformX = invDet * (map_info->dirY * spriteX - map_info->dirX * spriteY);
-            double transformY = invDet * ((map_info->planeY) * -1 * spriteX + map_info->planeX * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
-            int spriteScreenX = (int)((map_info->win_w / 2) * (1 + transformX / transformY));
-            int spriteHeight = abs((int)(map_info->win_h / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
-            int drawStartY = -spriteHeight / 2 + map_info->win_h / 2;
-            if (drawStartY < 0)
-                drawStartY = 0;
-            int drawEndY = spriteHeight / 2 + map_info->win_h / 2;
-            if (drawEndY >= map_info->win_h)
-                drawEndY = map_info->win_h - 1;
-            int spriteWidth = abs((int)(map_info->win_h / (transformY)));
-            int drawStartX = -spriteWidth / 2 + spriteScreenX;
-            if (drawStartX < 0)
-                drawStartX = 0;
-            int drawEndX = spriteWidth / 2 + spriteScreenX;
-            if (drawEndX >= map_info->win_w)
-                drawEndX = map_info->win_w - 1;
-            for (int stripe = drawStartX; stripe < drawEndX; stripe++)
-            {
-                int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * map_info->no_text.width / spriteWidth) / 256;
-
-                if (transformY > 0 && stripe > 0 && stripe < map_info->win_w && transformY < zBuffer[stripe])
-                {
-                    for (int y = drawStartY; y < drawEndY; y++)
-                    {
-                        int d = (y)*256 - map_info->win_h * 128 + spriteHeight * 128;
-                        int texY = ((d * map_info->no_text.height) / spriteHeight) / 256;
-                        color = ((unsigned int *)(map_info->spr.addr))[map_info->no_text.width * texY + texX];
-                        if ((color & 0xFFFFFF) != 0)
-                            my_mlx_pixel_put(map_info, stripe, y, color);
-                    }
-                }
-            }
-        }
-    }
-
-    if (map_info->screenshot == 1)
-    {
-        int fd;
-        unsigned char bitmap[54];
-        int i = 0;
-        int filesize;
-        unsigned int *tmp;
-
-        filesize = map_info->win_w * map_info->win_h * 4 + 54;
-        fd = open("screen.bmp", O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-        while (i < 54)
-        {
-            bitmap[i] = (unsigned char)0;
-            i++;
-        }
-        bitmap[0] = 'B';
-        bitmap[1] = 'M';
-        bitmap[2] = filesize;
-        bitmap[10] = 54;
-        bitmap[14] = 40;
-        *((int *)(bitmap + 2)) = filesize;
-        *(int *)(bitmap + 10) = 54;
-        *(int *)(bitmap + 14) = 40;
-        *(int *)(bitmap + 18) = map_info->win_w;
-        *(int *)(bitmap + 22) = map_info->win_h;
-        *(bitmap + 26) = 1;
-        *(bitmap + 28) = 32;
-
-        write(fd, bitmap, 54);
-        int l;
-        int s;
-        l = (map_info->win_h - 1) * map_info->win_w;
-        tmp = (unsigned int *)map_info->addr;
-
-        while (l >= 0)
-        {
-            s = 0;
-            while (s < map_info->win_w)
-            {
-                write(fd, &tmp[l], 4);
-                s++;
-                l++;
-            }
-            l -= 2 * map_info->win_w;
-        }
-        close(fd);
-        close_all(map_info);
-    }
-
-    mlx_put_image_to_window(map_info->mlx, map_info->win, map_info->img, 0, 0);
-}
-
 int key_hook(t_map *map_info)
 {
     double rotSpeed;
@@ -345,9 +132,7 @@ int key_hook(t_map *map_info)
     rotSpeed = 0.03;
     moveSpeed = 0.08;
     if (map_info->keys.esc == 1)
-    {
         close_all(map_info);
-    }
     if (map_info->keys.left == 1)
     {
         oldDirX = map_info->dirX;
@@ -394,7 +179,7 @@ int key_hook(t_map *map_info)
         if (map_info->map[(int)(map_info->posY)][(int)(map_info->posX - (map_info->dirY) * moveSpeed)] != '1')
             map_info->posX -= (map_info->dirY) * moveSpeed;
     }
-    draw_wall(map_info);
+    draw_picture(map_info);
     return (0);
 }
 
@@ -434,8 +219,18 @@ int unpressed_key(int keycode, t_map *map_info)
     return (0);
 }
 
+void track_hooks(t_map *map_info)
+{
+    mlx_loop_hook(map_info->mlx, key_hook, map_info);
+    mlx_hook(map_info->win, 2, 0, pressed_key, map_info);
+    mlx_hook(map_info->win, 17, 0, close_all, map_info);
+    mlx_hook(map_info->win, 3, 0, unpressed_key, map_info);
+    mlx_loop(map_info->mlx);
+}
+
 void set_struct(t_map *map_info)
 {
+    map_info->win = NULL;
     map_info->win_h = 0;
     map_info->win_w = 0;
     map_info->no = NULL;
@@ -480,23 +275,24 @@ void print_err(int err)
         printf("%s\n%s\n", ERROR, IMAGE_ERROR);
     else if (err == -16)
         printf("%s\n%s\n", ERROR, WINDOW_ERROR);
+    else if (err == -17)
+        printf("%s\n%s\n", ERROR, FD_ERROR);
     else if (err == -100)
         printf("%s\n%s\n", ERROR, MALLOC_ERROR);
 }
 
-int write_info(char ***map, t_map *map_info)
+int write_info(char ***map, t_map *map_info, char **argv)
 {
     int fd;
     int ret;
     int err;
     char map_str[BUF_SIZE + 1];
 
-    if ((fd = open("map.cub", O_RDWR) < 0))
+    if (((fd = open(argv[1], O_RDWR)) < 0))
     {
-        printf(FD_ERROR);
+        print_err(-17);
         return (-1);
     }
-    fd = open("map.cub", O_RDWR);
     while ((ret = read(fd, map_str, BUF_SIZE)))
         map_str[ret] = '\0';
     close(fd);
@@ -632,15 +428,6 @@ int load_images(t_map *map_info, int *err)
     return (0);
 }
 
-void track_hooks(t_map *map_info)
-{
-    mlx_loop_hook(map_info->mlx, key_hook, map_info);
-    mlx_hook(map_info->win, 2, 0, pressed_key, map_info);
-    mlx_hook(map_info->win, 17, 0, close_all, map_info);
-    mlx_hook(map_info->win, 3, 0, unpressed_key, map_info);
-    mlx_loop(map_info->mlx);
-}
-
 int main_image(t_map *m)
 {
     m->img = mlx_new_image(m->mlx, m->win_w, m->win_h);
@@ -661,7 +448,7 @@ int main_image(t_map *m)
 
 int check_args(t_map *m, int argc, char **argv)
 {
-    if (argc != 2)
+    if (!(argc == 3 && !ft_strncmp(argv[2], "--save", 6)))
     {
         if (!(m->win = mlx_new_window(m->mlx, m->win_w, m->win_h, "cub3D")))
         {
@@ -673,7 +460,7 @@ int check_args(t_map *m, int argc, char **argv)
             return (-1);
         }
     }
-    else if (argc == 2 && !ft_strncmp(argv[1], "--save", 6))
+    else if (argc == 3 && !ft_strncmp(argv[2], "--save", 6))
         m->screenshot = 1;
     return (0);
 }
@@ -685,7 +472,7 @@ int main(int argc, char **argv)
     int err;
 
     set_struct(&map_info);
-    if ((write_info(&map, &map_info) < 0))
+    if ((write_info(&map, &map_info, argv) < 0))
         return (-1);
     if ((copy_map(&map_info, &map) < 0))
         return (-1);
@@ -700,7 +487,7 @@ int main(int argc, char **argv)
     mlx_do_key_autorepeatoff(map_info.mlx);
     if ((main_image(&map_info) < 0))
         return (-1);
-    draw_wall(&map_info);
+    draw_picture(&map_info);
     track_hooks(&map_info);
     return (0);
 }
