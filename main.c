@@ -1,68 +1,73 @@
-#include <mlx.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "main.h"
 
-typedef struct  s_vars
+void	set_struct(t_map *m)
 {
-    void *mlx;
-    void *win;
-    int i;
-    int x;
-    int y;
-
-    void *img;
-    char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
-}               t_vars;
-
-typedef struct  s_img
-{
-    void *img;
-    char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
-}               t_img;
-
-
-int key_hook(int keycode, t_vars *vars)
-{
-    if (keycode == 53)
-    {
-        mlx_destroy_window(vars->mlx, vars->win);
-    }
-    exit(0);
-    return (0);
+	m->win = NULL;
+	m->winh = 0;
+	m->winw = 0;
+	m->no = NULL;
+	m->so = NULL;
+	m->we = NULL;
+	m->ea = NULL;
+	m->s = NULL;
+	m->floor.type = NULL;
+	m->ceil.type = NULL;
+	m->screenshot = 0;
 }
 
-void my_mlx_pixel_put(t_vars *data, int x, int y, int color)
+void	big_res(t_map *m)
 {
-    char *dst;
+	int sizex;
+	int sizey;
 
-    dst = data->addr + (y * data->line_length + x * (data->bits_per_pixel / 8));
-    *(unsigned int *)dst = color;
+	mlx_get_screen_size(&sizex, &sizey);
+	if (m->winh > sizey)
+		m->winh = sizey;
+	if (m->winw > (int)((double)sizey * 1.778))
+		m->winw = (int)((double)sizey * 1.778);
 }
 
-int     main(void)
+int		main_image(t_map *m)
 {
-    t_vars vars;
-    // t_img image;
+	m->img = mlx_new_image(m->mlx, m->winw, m->winh);
+	if (m->img == NULL)
+	{
+		print_err(-15);
+		if (m->win)
+			mlx_destroy_window(m->mlx, m->win);
+		free(m->sprites);
+		free(m->map);
+		return (-1);
+	}
+	m->ad = mlx_get_data_addr(m->img, &m->bpp, &m->ll, &m->end);
+	m->x = (double)m->x_player + 0.5;
+	m->y = (double)m->y_player + 0.5;
+	return (0);
+}
 
-    vars.mlx = mlx_init();
-    vars.win = mlx_new_window(vars.mlx, 640, 480, "test");
-    // mlx_key_hook(vars.win, key_hook, &vars);
-    // mlx_hook(vars.win, 17, 1L<<15, key_hook, &vars);
-    vars.img = mlx_new_image(vars.mlx, 640, 480);
-    vars.addr = mlx_get_data_addr(vars.img, &vars.bits_per_pixel, &vars.line_length, &vars.endian);
-    my_mlx_pixel_put(&vars, 0, 0, 0xE9C0B6);
-    my_mlx_pixel_put(&vars, 1, 0, 0xE9C0B6);
-    mlx_put_image_to_window(vars.mlx, vars.win, vars.img, 0, 0);
-    for (int i = 0; i < 8; i++)
-    {
-        printf("%u\n", vars.addr[i] & 0x0000FF);
-    }
-    // printf("%x\n%x\n%x\n%x\n", vars.addr[0], vars.addr[1], vars.addr[2], vars.addr[3]);
-    mlx_loop(vars.mlx);
+int		main(int argc, char **argv)
+{
+	char	**map;
+	t_map	main_info;
+	int		err;
+
+	set_struct(&main_info);
+	if ((write_info(&map, &main_info, argv) < 0))
+		return (-1);
+	if ((copy_map(&main_info, &map) < 0))
+		return (-1);
+	if ((check_conf(&main_info, &map, &err) < 0))
+		return (-1);
+	main_info.mlx = mlx_init();
+	if ((load_images(&main_info, &err) < 0))
+		return (-1);
+	big_res(&main_info);
+	if ((check_args(&main_info, argc, argv) < 0))
+		return (-1);
+	mlx_do_key_autorepeatoff(main_info.mlx);
+	if ((main_image(&main_info) < 0))
+		return (-1);
+	draw_picture(&main_info);
+	track_hooks(&main_info);
+	return (0);
 }

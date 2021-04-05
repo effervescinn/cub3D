@@ -1,0 +1,45 @@
+#include "main.h"
+
+void	set_n(t_map *main_info)
+{
+	main_info->dx = 0;
+	main_info->dy = -1;
+	main_info->px = 0.57;
+	main_info->py = 0;
+}
+
+void	set_s(t_map *main_info)
+{
+	main_info->dx = 0;
+	main_info->dy = 1;
+	main_info->px = -0.57;
+	main_info->py = 0;
+}
+
+void	set_w(t_map *main_info)
+{
+	main_info->dx = -1;
+	main_info->dy = 0;
+	main_info->px = 0;
+	main_info->py = -0.57;
+}
+
+void	set_e(t_map *main_info)
+{
+	main_info->dx = 1;
+	main_info->dy = 0;
+	main_info->px = 0;
+	main_info->py = 0.57;
+}
+
+void	set_dir(t_map *main_info, char letter)
+{
+	if (letter == 'N')
+		set_n(main_info);
+	else if (letter == 'S')
+		set_s(main_info);
+	else if (letter == 'W')
+		set_w(main_info);
+	else if (letter == 'E')
+		set_e(main_info);
+}
