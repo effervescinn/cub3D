@@ -52,7 +52,12 @@ void check_hit(t_map *map_info)
             map_info->walls.mapY += map_info->walls.stepY;
             map_info->walls.side = 1;
         }
-        if (map_info->map[map_info->walls.mapY][map_info->walls.mapX] != '0' && map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'N' && map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'W' && map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'E' && map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'S' && map_info->map[map_info->walls.mapY][map_info->walls.mapX] != '2')
+        if (map_info->map[map_info->walls.mapY][map_info->walls.mapX] != '0' &&
+            map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'N' &&
+            map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'W' &&
+            map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'E' &&
+            map_info->map[map_info->walls.mapY][map_info->walls.mapX] != 'S' &&
+            map_info->map[map_info->walls.mapY][map_info->walls.mapX] != '2')
             map_info->walls.hit = 1;
     }
 }
@@ -62,7 +67,7 @@ void draw_line(t_map *map_info, int p)
     unsigned int color;
     int y;
 
-    y = 0;
+    y = map_info->walls.drawStart;
     while (y < map_info->walls.drawEnd)
     {
         map_info->walls.texY = (int)(map_info->walls.texPos) & (map_info->we_text.height - 1);
@@ -80,42 +85,47 @@ void draw_line(t_map *map_info, int p)
     }
 }
 
-void draw_walls(t_map *map_info, double **zBuffer)
+void count_w_c(t_map *map_info)
+{
+    if (map_info->walls.side == 0)
+        map_info->walls.perpWallDist = (map_info->walls.mapX - map_info->posX + (1 - map_info->walls.stepX) / 2) / map_info->walls.rayDirX;
+    else
+        map_info->walls.perpWallDist = (map_info->walls.mapY - map_info->posY + (1 - map_info->walls.stepY) / 2) / map_info->walls.rayDirY;
+    map_info->walls.lineHeight = (int)(map_info->win_h / map_info->walls.perpWallDist);
+    map_info->walls.drawStart = map_info->win_h / 2 - map_info->walls.lineHeight / 2;
+    if (map_info->walls.drawStart < 0)
+        map_info->walls.drawStart = 0;
+    map_info->walls.drawEnd = map_info->walls.lineHeight / 2 + map_info->win_h / 2;
+    if (map_info->walls.drawEnd >= map_info->win_h)
+        map_info->walls.drawEnd = map_info->win_h - 1;
+}
+
+void draw_walls(t_map *m, double **zBuffer)
 {
     int p;
 
-    p = 0;
-    while (p < map_info->win_w)
+    p = -1;
+    while (++p < m->win_w)
     {
-        set_walls_s(map_info, p);
-        move_ray(map_info);
-        check_hit(map_info);
-        if (map_info->walls.side == 0)
-            map_info->walls.perpWallDist = (map_info->walls.mapX - map_info->posX + (1 - map_info->walls.stepX) / 2) / map_info->walls.rayDirX;
+        set_walls_s(m, p);
+        move_ray(m);
+        check_hit(m);
+        count_w_c(m);
+        if (m->walls.side == 0)
+            m->walls.wallX = m->posY + m->walls.perpWallDist * m->walls.rayDirY;
         else
-            map_info->walls.perpWallDist = (map_info->walls.mapY - map_info->posY + (1 - map_info->walls.stepY) / 2) / map_info->walls.rayDirY;
-        map_info->walls.lineHeight = (int)(map_info->win_h / map_info->walls.perpWallDist);
-        map_info->walls.drawStart = (-1) * map_info->walls.lineHeight / 2 + map_info->win_h / 2;
-        if (map_info->walls.drawStart < 0)
-            map_info->walls.drawStart = 0;
-        map_info->walls.drawEnd = map_info->walls.lineHeight / 2 + map_info->win_h / 2;
-        if (map_info->walls.drawEnd >= map_info->win_h)
-            map_info->walls.drawEnd = map_info->win_h - 1;
-        if (map_info->walls.side == 0)
-            map_info->walls.wallX = map_info->posY + map_info->walls.perpWallDist * map_info->walls.rayDirY;
-        else
-            map_info->walls.wallX = map_info->posX + map_info->walls.perpWallDist * map_info->walls.rayDirX;
-        map_info->walls.wallX -= floor((map_info->walls.wallX));
-        map_info->walls.texX = (int)(map_info->walls.wallX * (double)(map_info->no_text.width));
-        if (map_info->walls.side == 0 && map_info->walls.rayDirX <= 0)
-            map_info->walls.texX = map_info->ea_text.width - 1 - map_info->walls.texX;
-        if (map_info->walls.side == 1 && map_info->walls.rayDirY >= 0)
-            map_info->walls.texX = map_info->so_text.width - 1 - map_info->walls.texX;
-        map_info->walls.step = 1.0 * map_info->no_text.height / map_info->walls.lineHeight;
-        map_info->walls.texPos = (map_info->walls.drawStart - map_info->win_h / 2 + map_info->walls.lineHeight / 2) * map_info->walls.step;
-        draw_line(map_info, p);
-        (*zBuffer)[p] = map_info->walls.perpWallDist;
-        p++;
+            m->walls.wallX = m->posX + m->walls.perpWallDist * m->walls.rayDirX;
+        m->walls.wallX -= floor((m->walls.wallX));
+        m->walls.texX = (int)(m->walls.wallX * (double)(m->no_text.width));
+        if (m->walls.side == 0 && m->walls.rayDirX <= 0)
+            m->walls.texX = m->ea_text.width - 1 - m->walls.texX;
+        if (m->walls.side == 1 && m->walls.rayDirY >= 0)
+            m->walls.texX = m->so_text.width - 1 - m->walls.texX;
+        m->walls.step = 1.0 * m->no_text.height / m->walls.lineHeight;
+        m->walls.texPos = (m->walls.drawStart - m->win_h / 2 + m->walls.lineHeight / 2);
+        m->walls.texPos *= m->walls.step;
+        draw_line(m, p);
+        (*zBuffer)[p] = m->walls.perpWallDist;
     }
 }
 
@@ -124,7 +134,7 @@ void set_sprites(t_map *map_info, double **spriteDistance, int **spriteOrder)
     int i;
 
     i = 0;
-    while (i < map_info->spr_l) //считаем расстояние до спрайтов
+    while (i < map_info->spr_l)
     {
         (*spriteOrder)[i] = i;
         (*spriteDistance)[i] = ((map_info->posX - map_info->sprites[i].x) * (map_info->posX - map_info->sprites[i].x) + (map_info->posY - map_info->sprites[i].y) * (map_info->posY - map_info->sprites[i].y));
@@ -133,62 +143,68 @@ void set_sprites(t_map *map_info, double **spriteDistance, int **spriteOrder)
     sort_sprites(*spriteOrder, *spriteDistance, map_info->spr_l);
 }
 
-void draw_sprs(t_map *map_info, int *spriteOrder, double *zBuffer)
+void set_sprs_v(t_map *m, int *stripe)
 {
-    int i;
-    int stripe;
+    m->d_sprs.invDet = 1.0 / (m->planeX * m->dirY - m->dirX * m->planeY);
+    m->d_sprs.transformX = m->d_sprs.invDet * (m->dirY * m->d_sprs.spriteX - m->dirX * m->d_sprs.spriteY);
+    m->d_sprs.transformY = m->d_sprs.invDet * ((m->planeY) * -1 * m->d_sprs.spriteX + m->planeX * m->d_sprs.spriteY);
+    m->d_sprs.spriteScreenX = (int)((m->win_w / 2) * (1 + m->d_sprs.transformX / m->d_sprs.transformY));
+    m->d_sprs.spriteHeight = abs((int)(m->win_h / (m->d_sprs.transformY)));
+    m->d_sprs.drawStartY = (-1) * m->d_sprs.spriteHeight / 2 + m->win_h / 2;
+    if (m->d_sprs.drawStartY < 0)
+        m->d_sprs.drawStartY = 0;
+    m->d_sprs.drawEndY = m->d_sprs.spriteHeight / 2 + m->win_h / 2;
+    if (m->d_sprs.drawEndY >= m->win_h)
+        m->d_sprs.drawEndY = m->win_h - 1;
+    m->d_sprs.spriteWidth = abs((int)(m->win_h / (m->d_sprs.transformY)));
+    m->d_sprs.drawStartX = (-1) * m->d_sprs.spriteWidth / 2 + m->d_sprs.spriteScreenX;
+    if (m->d_sprs.drawStartX < 0)
+        m->d_sprs.drawStartX = 0;
+    m->d_sprs.drawEndX = m->d_sprs.spriteWidth / 2 + m->d_sprs.spriteScreenX;
+    if (m->d_sprs.drawEndX >= m->win_w)
+        m->d_sprs.drawEndX = m->win_w - 1;
+    *stripe = m->d_sprs.drawStartX - 1;
+}
+
+void pixel_sprs(t_map *m, int *stripe, double *buffer)
+{
     int y;
     int d;
     unsigned int color;
 
-    i = 0;
-    while (i < map_info->spr_l)
+    while (++(*stripe) < m->d_sprs.drawEndX)
     {
-        if (!(((int)map_info->posX == (int)map_info->sprites[spriteOrder[i]].x) && ((int)map_info->posY == (int)map_info->sprites[spriteOrder[i]].y)))
+        m->d_sprs.texX = (int)(256 * (*stripe - (-1 * m->d_sprs.spriteWidth / 2 + m->d_sprs.spriteScreenX)) * m->no_text.width / m->d_sprs.spriteWidth) / 256;
+        if (m->d_sprs.transformY > 0 && *stripe > 0 && *stripe < m->win_w && m->d_sprs.transformY < buffer[*stripe])
         {
-            map_info->d_sprs.spriteX = map_info->sprites[spriteOrder[i]].x - map_info->posX;
-            map_info->d_sprs.spriteY = map_info->sprites[spriteOrder[i]].y - map_info->posY;
-            map_info->d_sprs.invDet = 1.0 / (map_info->planeX * map_info->dirY - map_info->dirX * map_info->planeY); //required for correct matrix multiplication
-
-            map_info->d_sprs.transformX = map_info->d_sprs.invDet * (map_info->dirY * map_info->d_sprs.spriteX - map_info->dirX * map_info->d_sprs.spriteY);
-            map_info->d_sprs.transformY = map_info->d_sprs.invDet * ((map_info->planeY) * -1 * map_info->d_sprs.spriteX + map_info->planeX * map_info->d_sprs.spriteY); //this is actually the depth inside the screen, that what Z is in 3D
-            map_info->d_sprs.spriteScreenX = (int)((map_info->win_w / 2) * (1 + map_info->d_sprs.transformX / map_info->d_sprs.transformY));
-            map_info->d_sprs.spriteHeight = abs((int)(map_info->win_h / (map_info->d_sprs.transformY))); //using 'transformY' instead of the real distance prevents fisheye
-            map_info->d_sprs.drawStartY = (-1) * map_info->d_sprs.spriteHeight / 2 + map_info->win_h / 2;
-            if (map_info->d_sprs.drawStartY < 0)
-                map_info->d_sprs.drawStartY = 0;
-            map_info->d_sprs.drawEndY = map_info->d_sprs.spriteHeight / 2 + map_info->win_h / 2;
-            if (map_info->d_sprs.drawEndY >= map_info->win_h)
-                map_info->d_sprs.drawEndY = map_info->win_h - 1;
-            map_info->d_sprs.spriteWidth = abs((int)(map_info->win_h / (map_info->d_sprs.transformY)));
-            map_info->d_sprs.drawStartX = (-1) * map_info->d_sprs.spriteWidth / 2 + map_info->d_sprs.spriteScreenX;
-            if (map_info->d_sprs.drawStartX < 0)
-                map_info->d_sprs.drawStartX = 0;
-            map_info->d_sprs.drawEndX = map_info->d_sprs.spriteWidth / 2 + map_info->d_sprs.spriteScreenX;
-            if (map_info->d_sprs.drawEndX >= map_info->win_w)
-                map_info->d_sprs.drawEndX = map_info->win_w - 1;
-            stripe = map_info->d_sprs.drawStartX;
-            while (stripe < map_info->d_sprs.drawEndX)
+            y = m->d_sprs.drawStartY - 1;
+            while (++y < m->d_sprs.drawEndY)
             {
-                map_info->d_sprs.texX = (int)(256 * (stripe - (-1 * map_info->d_sprs.spriteWidth / 2 + map_info->d_sprs.spriteScreenX)) * map_info->no_text.width / map_info->d_sprs.spriteWidth) / 256;
-
-                if (map_info->d_sprs.transformY > 0 && stripe > 0 && stripe < map_info->win_w && map_info->d_sprs.transformY < zBuffer[stripe])
-                {
-                    y = map_info->d_sprs.drawStartY;
-                    while (y < map_info->d_sprs.drawEndY)
-                    {
-                        d = (y)*256 - map_info->win_h * 128 + map_info->d_sprs.spriteHeight * 128;
-                        map_info->d_sprs.texY = ((d * map_info->no_text.height) / map_info->d_sprs.spriteHeight) / 256;
-                        color = ((unsigned int *)(map_info->spr.addr))[map_info->no_text.width * map_info->d_sprs.texY + map_info->d_sprs.texX];
-                        if ((color & 0xFFFFFF) != 0)
-                            my_mlx_pixel_put(map_info, stripe, y, color);
-                        y++;
-                    }
-                }
-                stripe++;
+                d = (y)*256 - m->win_h * 128 + m->d_sprs.spriteHeight * 128;
+                m->d_sprs.texY = ((d * m->no_text.height) / m->d_sprs.spriteHeight) / 256;
+                color = ((unsigned int *)(m->spr.addr))[m->no_text.width * m->d_sprs.texY + m->d_sprs.texX];
+                if ((color & 0xFFFFFF) != 0)
+                    my_mlx_pixel_put(m, *stripe, y, color);
             }
         }
-        i++;
+    }
+}
+
+void draw_sprs(t_map *m, int *spriteOrder, double *buffer)
+{
+    int i;
+    int stripe;
+
+    i = -1;
+    while (++i < m->spr_l)
+    {
+        if (!(((int)m->posX == (int)m->sprites[spriteOrder[i]].x) && ((int)m->posY == (int)m->sprites[spriteOrder[i]].y)))
+        {
+            m->d_sprs.spriteX = m->sprites[spriteOrder[i]].x - m->posX;
+            m->d_sprs.spriteY = m->sprites[spriteOrder[i]].y - m->posY;
+            set_sprs_v(m, &stripe);
+            pixel_sprs(m, &stripe, buffer);
+        }
     }
 }
 
