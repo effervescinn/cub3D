@@ -19,6 +19,7 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <math.h>
+# include <mlx.h>
 # define BUF_SIZE 1024
 
 # define ESC 53
@@ -28,6 +29,51 @@
 # define KEY_D 2
 # define KEY_LEFT 123
 # define KEY_RIGHT 124
+
+typedef struct	s_d_spr
+{
+	double spriteX;
+    double spriteY;
+    double invDet;
+    double transformX;
+    double transformY;
+    int spriteScreenX;
+    int spriteHeight;
+    int drawStartY;
+    int drawEndY;
+    int spriteWidth;
+    int drawStartX;
+    int drawEndX;
+    int texX;
+    int texY;
+}				t_d_spr;
+
+typedef struct	s_walls
+{
+	double cameraX;
+    double rayx;
+    double rayy;
+    int mapX;
+    int mapY;
+    double sideDistX;
+    double sideDistY;
+    double deltaDistX;
+    double deltaDistY;
+    double wall_d;
+    int stepX;
+    int stepY;
+    int side;
+    int hit;
+    int lh;
+    int drawStart;
+    int drawEnd;
+    double wallX;
+    int texX;
+    double step;
+    double texPos;
+    int texY;
+}				t_walls;
+
 
 typedef struct	s_color
 {
@@ -46,6 +92,8 @@ typedef struct s_keys {
 
 	int left;
 	int right;
+
+	int esc;
 }				t_keys;
 
 typedef struct	s_spr
@@ -58,9 +106,9 @@ typedef struct  s_img
 {
 	void *img;
     char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
+    int bpp;
+    int ll;
+    int end;
 	int width;
 	int height;
 }               t_img;
@@ -94,9 +142,9 @@ typedef struct	s_map
 
 	void *img;
     char *addr;
-    int bits_per_pixel;
-    int line_length;
-    int endian;
+    int bpp;
+    int ll;
+    int end;
 
 	double posX;
 	double posY;
@@ -106,19 +154,22 @@ typedef struct	s_map
 	double planeX;
 	double planeY;
 
-	t_img no_text;
-	t_img so_text;
-	t_img we_text;
-	t_img ea_text;
+	t_img no_t;
+	t_img so_t;
+	t_img we_t;
+	t_img ea_t;
 	t_img spr;
 
-	int sprites_len;
+	int spr_l;
 	t_spr *sprites;
 
 	int screenshot;
 
 	t_color floor;
 	t_color ceil;
+
+	t_walls walls;
+	t_d_spr	d_sprs;
 }				t_map;
 
 t_list			*ft_lstmap(t_list *lst, void *(*f)(void *),
