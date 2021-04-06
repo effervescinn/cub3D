@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   check_sides_floor_color.c                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:38:35 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:38:36 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
 int	set_f_c(char *map_line, t_color *c_type)
@@ -50,7 +62,6 @@ int	check_f_c(char *map_line, t_map *m)
 	}
 	return (0);
 }
-
 
 int	set_walls(char *map_line, t_map *main_info, int *i)
 {

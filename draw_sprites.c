@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   draw_sprites.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:39:31 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:39:34 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
-void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
+void	sort_sprites(int *sprite_order, double *sprite_distance, int len)
 {
 	int		i;
 	int		j;
@@ -13,14 +25,14 @@ void sort_sprites(int *spriteOrder, double *spriteDistance, int len)
 		j = len - 1;
 		while (j > i)
 		{
-			if (spriteDistance[j - 1] < spriteDistance[j])
+			if (sprite_distance[j - 1] < sprite_distance[j])
 			{
-				dist_perm = spriteDistance[j - 1];
-				order_perm = spriteOrder[j - 1];
-				spriteDistance[j - 1] = spriteDistance[j];
-				spriteDistance[j] = dist_perm;
-				spriteOrder[j - 1] = spriteOrder[j];
-				spriteOrder[j] = order_perm;
+				dist_perm = sprite_distance[j - 1];
+				order_perm = sprite_order[j - 1];
+				sprite_distance[j - 1] = sprite_distance[j];
+				sprite_distance[j] = dist_perm;
+				sprite_order[j - 1] = sprite_order[j];
+				sprite_order[j] = order_perm;
 			}
 			j--;
 		}

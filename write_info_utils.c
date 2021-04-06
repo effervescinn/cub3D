@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   write_info_utils.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:42:23 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:42:24 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
-int check_n_s_xpm(t_map *info)
+int	check_n_s_xpm(t_map *info)
 {
 	int i;
 
@@ -21,9 +33,9 @@ int check_n_s_xpm(t_map *info)
 	return (0);
 }
 
-int check_w_e_xpm(t_map *info)
+int	check_w_e_xpm(t_map *info)
 {
-	int i;
+	int	i;
 
 	i = ft_strlen(info->we);
 	if (i < 5)
@@ -42,9 +54,9 @@ int check_w_e_xpm(t_map *info)
 	return (0);
 }
 
-int check_spr_xpm(t_map *info)
+int	check_spr_xpm(t_map *info)
 {
-	int i;
+	int	i;
 
 	i = ft_strlen(info->s);
 	if (i < 5)
@@ -56,9 +68,9 @@ int check_spr_xpm(t_map *info)
 	return (0);
 }
 
-int check_info(char **map, t_map *info)
+int	check_info(char **map, t_map *info)
 {
-	int ret;
+	int	ret;
 
 	if ((ret = check_let(map, info)) < 0)
 		return (ret);
@@ -83,7 +95,7 @@ int check_info(char **map, t_map *info)
 	return (0);
 }
 
-int use_gnl(char ***map, char **line, char **map_str, int fd)
+int	use_gnl(char ***map, char **line, char **map_str, int fd)
 {
 	char	*tmp;
 

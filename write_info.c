@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   write_info.c                                       :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:41:54 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:41:55 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
 int	write_info(char ***map, t_map *m, char **argv)
@@ -18,7 +30,6 @@ int	write_info(char ***map, t_map *m, char **argv)
 	}
 	if ((use_gnl(map, &line, &(m->map_str), fd)) < 0)
 		return (-1);
-	// free(m->map_str);
 	if ((err = check_info(*map, m)) < 0)
 	{
 		print_err(err);

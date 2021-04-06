@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   check_emptys.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:38:15 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:38:17 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
 void	count_letters(char **map_str, int *i)
@@ -7,9 +19,11 @@ void	count_letters(char **map_str, int *i)
 	letters = 0;
 	while (ft_isascii((*map_str)[*i]) && (*map_str)[*i] && letters < 8)
 	{
-		if ((*map_str)[*i] == 'R' || (*map_str)[*i] == 'N' || ((*map_str)[*i] == 'S' &&
-		(*map_str)[*i + 1] == 'O') || (*map_str)[*i] == 'W' || (*map_str)[*i] == 'E' ||
-		((*map_str)[*i] == 'S' && (*map_str)[*i + 1] == ' ') || (*map_str)[*i] == 'C'
+		if ((*map_str)[*i] == 'R' || (*map_str)[*i] == 'N' ||
+		((*map_str)[*i] == 'S' && (*map_str)[*i + 1] == 'O') ||
+		(*map_str)[*i] == 'W' || (*map_str)[*i] == 'E' ||
+		((*map_str)[*i] == 'S' && (*map_str)[*i + 1] == ' ') ||
+		(*map_str)[*i] == 'C'
 		|| (*map_str)[*i] == 'F')
 		{
 			letters++;
@@ -25,9 +39,11 @@ void	count_letters(char **map_str, int *i)
 
 int		odd_syms(char **map_str, int *i)
 {
-	if (!((*map_str)[*i] == ' ' || (*map_str)[*i] == '0' || (*map_str)[*i] == '1'
-	|| (*map_str)[*i] == '2' || (*map_str)[*i] == 'N' || (*map_str)[*i] == 'S'
-	|| (*map_str)[*i] == 'W' || (*map_str)[*i] == 'E' || (*map_str)[*i] == '\n' || (*map_str)[*i] == '\0'))
+	if (!((*map_str)[*i] == ' ' || (*map_str)[*i] == '0' ||
+	(*map_str)[*i] == '1' || (*map_str)[*i] == '2' ||
+	(*map_str)[*i] == 'N' || (*map_str)[*i] == 'S' ||
+	(*map_str)[*i] == 'W' || (*map_str)[*i] == 'E' ||
+	(*map_str)[*i] == '\n' || (*map_str)[*i] == '\0'))
 	{
 		print_err(-10);
 		free(*map_str);
@@ -38,9 +54,10 @@ int		odd_syms(char **map_str, int *i)
 
 int		map_syms(char **map_str, int *i)
 {
-	return ((*map_str)[*i] == ' ' || (*map_str)[*i] == '0' || (*map_str)[*i] == '1'
-	|| (*map_str)[*i] == '2' || (*map_str)[*i] == 'N' || (*map_str)[*i] == 'S'
-	|| (*map_str)[*i] == 'W' || (*map_str)[*i] == 'E');
+	return ((*map_str)[*i] == ' ' || (*map_str)[*i] == '0' ||
+	(*map_str)[*i] == '1' || (*map_str)[*i] == '2' ||
+	(*map_str)[*i] == 'N' || (*map_str)[*i] == 'S' ||
+	(*map_str)[*i] == 'W' || (*map_str)[*i] == 'E');
 }
 
 int		check_emptys(char **map_str)

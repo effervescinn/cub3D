@@ -1,11 +1,23 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   draw_f_c_sprites.c                                 :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: lnorcros <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2021/04/06 17:38:52 by lnorcros          #+#    #+#             */
+/*   Updated: 2021/04/06 17:38:53 by lnorcros         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "main.h"
 
-int     make_color(int r, int g, int b)
+int		make_color(int r, int g, int b)
 {
 	return (r << 16 | g << 8 | b);
 }
 
-void    draw_f_c(t_map *m)
+void	draw_f_c(t_map *m)
 {
 	int	i;
 	int	j;
