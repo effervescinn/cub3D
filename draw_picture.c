@@ -6,9 +6,12 @@ void	draw_picture(t_map *m)
 	double	*spr_dist;
 	int		*spr_ord;
 
-	buffer = (double *)malloc(m->winw * sizeof(double));
-	spr_dist = (double *)malloc(m->spr_l * sizeof(double));
-	spr_ord = (int *)malloc(m->spr_l * sizeof(int));
+	if (!(buffer = (double *)malloc(m->winw * sizeof(double))))
+		close_all(m);
+	if (!(spr_dist = (double *)malloc(m->spr_l * sizeof(double))))
+		close_all(m);
+	if (!(spr_ord = (int *)malloc(m->spr_l * sizeof(int))))
+		close_all(m);
 	draw_f_c(m);
 	draw_walls(m, &buffer);
 	set_sprites(m, &spr_dist, &spr_ord);

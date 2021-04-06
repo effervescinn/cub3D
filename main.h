@@ -129,6 +129,7 @@ typedef struct	s_map
 	int		map_len;
 	int		str_len;
 	char	**map;
+	char	*map_str;
 	int		x_player;
 	int		y_player;
 
@@ -234,5 +235,13 @@ int				load_textures(t_map *m);
 int				load_sprites(t_map *m);
 int				spr_arr(t_map *map_info, t_spr **sprites, int q);
 int				find_sprites(t_map *map_info, t_spr **sprites);
+int				get_next_line(int fd, char **line);
+int				write_line(char **rest, char **line, char **buf, int *c_r);
+int				check_rest(char **rest, char **line);
+int				use_gnl(char ***map, char **line, char **map_str, int fd);
+void			count_letters(char **map_str, int *i);
+int				odd_syms(char **map_str, int *i);
+int				map_syms(char **map_str, int *i);
+int				check_emptys(char **map_str);
 
 #endif

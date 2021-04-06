@@ -37,10 +37,19 @@ char	*get_ad(void *ptr, int *bpp, int *sl, int *e)
 
 void	ft_strcpy(char *dst, const char *src)
 {
-	while (*src)
+	if (*src == '\0')
+		*dst = '\0';
+	else
 	{
-		*dst = *src;
-		dst++;
-		src++;
+		while (*src)
+		{
+			*dst = *src;
+			dst++;
+			src++;
+		}
+		while (*dst)
+		{
+			*dst = '\0';
+		}
 	}
 }

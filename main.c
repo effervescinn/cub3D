@@ -17,8 +17,8 @@ void	set_struct(t_map *m)
 
 void	big_res(t_map *m)
 {
-	int sizex;
-	int sizey;
+	int	sizex;
+	int	sizey;
 
 	mlx_get_screen_size(&sizex, &sizey);
 	if (m->winh > sizey)
@@ -53,6 +53,8 @@ int		main(int argc, char **argv)
 
 	set_struct(&main_info);
 	if ((write_info(&map, &main_info, argv) < 0))
+		return (-1);
+	if (check_emptys(&(main_info.map_str)) < 0)
 		return (-1);
 	if ((copy_map(&main_info, &map) < 0))
 		return (-1);
