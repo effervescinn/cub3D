@@ -19,7 +19,7 @@ static int	is_num(const char s)
 	return (0);
 }
 
-static int count_len(const char *str)
+static int	count_len(const char *str)
 {
 	int i;
 
@@ -29,7 +29,7 @@ static int count_len(const char *str)
 		i++;
 		str++;
 	}
-	if (i >=9)
+	if (i >= 9)
 		return (-1);
 	return (0);
 }
